@@ -133,8 +133,7 @@ class CompleteGraph(graph.GraphStructure):
         parameter_list = [[1.,1.,0.0001, False], [1.,1.,10., False], [1.,1.,1., False], [1.,1.,1., False], [1.,1.,10., False], 
                             [1.,1.,1., False], [1.,1.,10., False], [1.,1.,10., False], [1.,1.,10., False],[1.,1.,10., False]]
 
-
-        ## Fit all conditional models
+        # Fit all conditional models
         for i in range(len(inputs_list)):
             X = inputs_list[i]
             Y = output_list[i]

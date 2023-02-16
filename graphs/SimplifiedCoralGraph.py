@@ -1,7 +1,7 @@
 import sys
 sys.path.append("..") 
 
-## Import basic packages
+## Import basic packages
 import numpy as np
 import pandas as pd
 from matplotlib import pylab as plt
@@ -22,7 +22,7 @@ from utils_functions import fit_single_GP_model
 
 from emukit.core.acquisition import Acquisition
 
-## Import GP python packages
+## Import GP python packages
 import GPy
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression

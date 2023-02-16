@@ -27,7 +27,7 @@ parser.add_argument('--type_cost', default = 1, type = int, help = 'cost structu
 parser.add_argument('--num_additional_observations', default = 20, type = int, help = 'num_additional_observations')
 parser.add_argument('--num_trials', default = 40, type = int, help = 'BO trials')
 parser.add_argument('--name_index', default = 0, type = int, help = 'name_index')
-parser.add_argument('--experiment', default = 'CompleteGraph', type = str, help = 'experiment')
+parser.add_argument('--experiment', default = 'complete_graph', type = str, help = 'experiment')
 parser.add_argument('--exploration_set', default = 'BO', type = str, help = 'exploration set')
 args = parser.parse_args()
 
@@ -64,17 +64,17 @@ experiment = args.experiment
 
 
 ## Set folder where to save objects
-folder = set_saving_folder(args)
-pathlib.Path("./Data/" + folder).mkdir(parents=True, exist_ok=True)
+saving_dir = get_saving_dir(args.experiment, args.type_cost, args.initial_num_obs_samples, args.num_interventions)
+pathlib.Path(saving_dir).mkdir(parents=True, exist_ok=True)
 
 
 ## Import the data
-observational_samples = pd.read_pickle('./Data/' + str(args.experiment) + '/' + 'observations.pkl')[:initial_num_obs_samples]
+observational_samples = pd.read_pickle('./data/' + str(args.experiment) + '/' + 'observations.pkl')[:initial_num_obs_samples]
 
-if experiment == 'CompleteGraph':
+if experiment == 'complete_graph':
   graph = CompleteGraph(observational_samples)
 
-if experiment == 'ToyGraph':
+if experiment == 'toy_graph':
     graph = ToyGraph(observational_samples)
 
 
@@ -91,8 +91,8 @@ dict_ranges =graph.get_interventional_ranges()
 
 
 ## Get true interventional data
-interventional_data_x = np.load('./Data/' + str(args.experiment) + '/' + 'interventional_data_x_BO.npy', allow_pickle=True)
-interventional_data_y = np.load('./Data/' + str(args.experiment) + '/' + 'interventional_data_y_BO.npy', allow_pickle=True)
+interventional_data_x = np.load('./data/' + str(args.experiment) + '/' + 'interventional_data_x_BO.npy', allow_pickle=True)
+interventional_data_y = np.load('./data/' + str(args.experiment) + '/' + 'interventional_data_y_BO.npy', allow_pickle=True)
 
 
 interventional_data = manipulative_variables.copy()
@@ -113,7 +113,7 @@ current_best_y_BO, total_time_BO) = NonCausal_BO(num_trials, graph, dict_ranges,
 												data_y, costs, observational_samples, functions, min_intervention_value, min_y, manipulative_variables)
 
 ## Save results
-save_results_BO(folder,  args, current_cost_BO, current_best_BO, current_best_y_BO, total_time_BO, Causal_prior=False)
+save_results_bayesian_optimisation(saving_dir, args, current_cost_BO, current_best_BO, current_best_y_BO, total_time_BO, Causal_prior=False)
 
 
 ## BO prior
@@ -123,12 +123,12 @@ current_best_y_BO_mf, total_time_BO_mf) = NonCausal_BO(num_trials, graph, dict_r
 												data_y, costs, observational_samples, functions, min_intervention_value, min_y, manipulative_variables, Causal_prior=True)
 
 ## Save results
-save_results_BO(folder,  args, current_cost_BO_mf, current_best_BO_mf, current_best_y_BO_mf, total_time_BO_mf, Causal_prior=True)
+save_results_bayesian_optimisation(saving_dir, args, current_cost_BO_mf, current_best_BO_mf, current_best_y_BO_mf, total_time_BO_mf, Causal_prior=True)
 
 print('Saved BO results')
 print('type_cost', args.type_cost)
 print('total_time_BO', total_time_BO_mf)
-print('folder', folder)
+print('folder', saving_dir)
 
 
 
