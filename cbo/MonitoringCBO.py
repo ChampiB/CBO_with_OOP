@@ -8,8 +8,13 @@ class MonitoringCBO:
     """
 
     def __init__(self, cbo, verbose=False):
-        # TODO Refacto this function
+        """
+        Create an object used to monitor the CBO agent
+        :param cbo: the CBO agent to monitor
+        :param verbose: whether to display debug information
+        """
 
+        # Store the CBO agent and the verbose mode
         self.cbo = cbo
         self.verbose = verbose
 
@@ -31,24 +36,28 @@ class MonitoringCBO:
         self.cumulative_cost = 0.
 
         # Define list to store info
-        n_exploration_sets = len(cbo.exploration_set)
-        self.target_function_list = [None] * n_exploration_sets
-        self.space_list = [None] * n_exploration_sets
-        self.model_list = [None] * n_exploration_sets
+        self.target_function_list = []
+        self.space_list = []
         self.type_trial = []
 
         # Define intervention function
         for s in range(len(cbo.exploration_set)):
             interventions = list_interventional_ranges(cbo.graph.get_interventional_ranges(), cbo.exploration_set[s])
-            self.target_function_list[s], self.space_list[s] = Intervention_function(
+            target_function, space = Intervention_function(
                 get_interventional_dict(cbo.exploration_set[s]),
                 model=cbo.graph.define_SEM(),
                 target_variable='Y',
                 min_intervention=interventions[0],
                 max_intervention=interventions[1]
             )
+            self.target_function_list.append(target_function)
+            self.space_list.append(space)
 
+        # Counter keeping track of the trial number
         self.i = 0
+
+        # The index of the last intervention set on which we intervened.
+        self.last_intervention = None
 
         # Time tracking attributes
         self.start_time = None
@@ -71,6 +80,7 @@ class MonitoringCBO:
         Log the agent behaviour, i.e., whether the agent performed an intervention or made an observation
         :param act: True, if the agent is acting, False otherwise (it is observing)
         """
+
         # Display the current optimisation step.
         if self.verbose is True:
             print('Optimization step', self.i)
@@ -86,13 +96,85 @@ class MonitoringCBO:
         # Increase the optimisation step.
         self.i += 1
 
-    def log_agent_performance(self, global_opt=None, current_cost=None):
+    def log_agent_performance(self, intervention_set=None, intervention=None, acquisition_xs=None, current_cost=None):
+        """
+        Log metrics representing the agent's performance
+        :param intervention_set: the set of variables on which the agent intervene
+        :param intervention: the values of the variables in the intervention_set
+        :param acquisition_xs: the values of x that produces the highest acquisition values
+        :param current_cost: the cost of performing the intervention
+        """
+
         # If the agent observes, then the cost and optimal reward stay the same as in the previous trial.
-        if global_opt is None and current_cost is None:
+        if current_cost is None:
             self.global_opt.append(self.global_opt[-1])
             self.current_cost.append(self.current_cost[-1])
-        else:
-            pass  # TODO
+            return
+
+        # Evaluate the target function for the intervention performed.
+        target_ys = self.compute_target_function(intervention_set, intervention, acquisition_xs)
+
+        # Add the new data to the dataset used by CBO.
+        self.add_intervention_data(target_ys, intervention, acquisition_xs)
+
+        # Update the dict storing the current optimal solution.
+        var_to_intervene = self.dict_interventions[intervention]
+        self.current_best_x[var_to_intervene].append(acquisition_xs[intervention][0][0])
+        self.current_best_y[var_to_intervene].append(target_ys[0][0])
+
+        # Find the new current best solution.
+        current_best = find_current_global(self.current_best_y, self.dict_interventions, self.cbo.task)
+
+        # Otherwise, the cost and optimal reward are provided as parameters.
+        self.global_opt.append(current_best)
+        self.cumulative_cost += current_cost
+        self.current_cost.append(self.cumulative_cost)
+
+        # Display optimal reward, if requested by the user.
+        if self.verbose is True:
+            print('####### Current_global #########', current_best)
+
+    def agent_previously_observed(self):
+        """
+        Getter
+        :return: True, if the agent observed during the previous trial, False otherwise
+        """
+        return self.type_trial[-2] == 0
+
+    def add_intervention_data(self, target_ys, intervention, acquisition_xs):
+        """
+        Add a new entry in the dataset
+        :param target_ys: the target values
+        :param intervention: the intervention perform
+        :param acquisition_xs: the values of x that produces the highest acquisition values
+        """
+        data_x = np.append(self.data_x_list[intervention], acquisition_xs[intervention], axis=0)
+        data_y = np.append(self.data_y_list[intervention], target_ys, axis=0)
+
+        self.data_x_list[intervention] = \
+            np.vstack((self.data_x_list[intervention], acquisition_xs[intervention]))
+        self.data_y_list[intervention] = \
+            np.vstack((self.data_y_list[intervention], target_ys))
+        self.cbo.model_list[intervention].set_data(data_x, data_y)
+
+    def compute_target_function(self, intervention_set, intervention, acquisition_xs):
+        """
+        Compute the target function
+        :param intervention_set: the set of variables on which the agent intervene
+        :param intervention: the intervention perform
+        :param acquisition_xs: the values of x that produces the highest acquisition values
+        :return: the target values
+        """
+
+        # Compute the value of the target function
+        y_new = self.target_function_list[intervention](acquisition_xs[intervention])
+
+        # Display debug information, if requested by the user.
+        if self.verbose is True:
+            print('Selected intervention set: ', intervention_set)
+            print('Selected values: ', acquisition_xs[intervention])
+            print('Target function at the selected values: ', y_new)
+        return y_new
 
     def save_results(self):
         """

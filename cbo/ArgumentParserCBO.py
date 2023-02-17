@@ -7,7 +7,7 @@ class ArgumentParserCBO:
     A class used to parse the argument of the script called: 'runCBO.py'.
     """
 
-    def __int__(self):
+    def __init__(self):
         """
         Create the parser
         """

@@ -41,8 +41,8 @@ def define_initial_data_BO(interventional_data, num_interventions, intervention_
     return data_x, data_y, min_intervention_value, min_y
 
 
-def update_BO_models(mean_function, var_function, data_x, data_y, Causal_prior):    
-    ## This function updates the BO model for each intervetion set 
+def update_gaussian_processes(mean_function, var_function, data_x, data_y, Causal_prior):
+    ## This function updates the BO model for each intervetion set
     if Causal_prior==False:
         gpy_model = GPy.models.GPRegression(data_x, data_y, 
                                               GPy.kern.RBF(data_x.shape[1], lengthscale=1., variance=1.), 
