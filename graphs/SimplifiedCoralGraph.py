@@ -17,7 +17,7 @@ from sklearn.linear_model import LinearRegression
 import sklearn.mixture
 
 from . import graph
-from utils_functions import fit_single_GP_model
+from utils_functions import fit_gaussian_process
 
 
 from emukit.core.acquisition import Acquisition
@@ -85,7 +85,7 @@ class SimplifiedCoralGraph(graph.GraphStructure):
         self.dist_Nutrients_PC1 = mixture
 
 
-    def define_SEM(self):
+    def define_sem(self):
 
         def fN(epsilon, **kwargs):
             return self.dist_Nutrients_PC1.sample(1)[0][0][0]
@@ -203,7 +203,7 @@ class SimplifiedCoralGraph(graph.GraphStructure):
         return dict_ranges
 
 
-    def fit_all_models(self):
+    def fit_all_gaussian_processes(self):
         functions = {}
         inputs_list = [self.N, np.hstack((self.O,self.S, self.T,self.D,self.TE)), np.hstack((self.C,self.N, self.L,self.TE)), np.hstack((self.T,self.S)),
                         np.hstack((self.D,self.S)), np.hstack((self.N,self.O,self.S, self.T,self.D,self.TE)), np.hstack((self.N,self.T,self.S)),
@@ -226,12 +226,12 @@ class SimplifiedCoralGraph(graph.GraphStructure):
         for i in range(len(inputs_list)):
             X = inputs_list[i]
             Y = output_list[i]
-            functions[name_list[i]] = fit_single_GP_model(X, Y, parameter_list[i])
+            functions[name_list[i]] = fit_gaussian_process(X, Y, parameter_list[i])
 
         return functions
 
 
-    def refit_models(self, observational_samples):
+    def fit_all_gaussian_processes(self, observational_samples):
         Y = np.asarray(observational_samples['Y'])[:,np.newaxis]
         N = np.asarray(observational_samples['N'])[:,np.newaxis]
         CO = np.asarray(observational_samples['CO'])[:,np.newaxis]
@@ -266,7 +266,7 @@ class SimplifiedCoralGraph(graph.GraphStructure):
         for i in range(len(inputs_list)):
             X = inputs_list[i]
             Y = output_list[i]
-            functions[name_list[i]] = fit_single_GP_model(X, Y, parameter_list[i])
+            functions[name_list[i]] = fit_gaussian_process(X, Y, parameter_list[i])
   
         return functions
 

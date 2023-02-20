@@ -2,11 +2,7 @@ import numpy as np
 
 
 def get_do_function_name(intervention_variables):
-    string = ''
-    for i in range(len(intervention_variables)):
-        string += str(intervention_variables[i]) 
-    total_string = 'compute_do_' + string
-    return total_string
+    return 'compute_do_' + "".join(intervention_variables)
 
 
 # Given a do function, this function is computing the mean and variance functions needed for the Causal prior

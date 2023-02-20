@@ -5,16 +5,16 @@ class GraphStructure:
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def define_SEM():
+    def define_sem(self):
         raise NotImplementedError("Subclass should implement this.")
 
     @abc.abstractmethod
-    def fit_all_models(self):
+    def fit_all_gaussian_processes(self):
 
         raise NotImplementedError("Subclass should implement this.")
 
     @abc.abstractmethod
-    def refit_models(self, observational_samples):
+    def fit_all_gaussian_processes(self, observational_samples):
         raise NotImplementedError("Subclass should implement this.")
 
 

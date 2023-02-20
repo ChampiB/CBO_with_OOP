@@ -24,7 +24,7 @@ def update_hull(observational_samples, manipulative_variables):
     return coverage_obs
 
 
-def observe(num_observation, complete_dataset = None, initial_num_obs_samples = None):
+def observe(num_observation, complete_dataset=None, initial_num_obs_samples=None):
     observational_samples = complete_dataset[initial_num_obs_samples:(initial_num_obs_samples+num_observation)]
     return observational_samples
     

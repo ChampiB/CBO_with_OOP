@@ -15,7 +15,7 @@ import copy
 import seaborn as sns
 
 from . import graph
-from utils_functions import fit_single_GP_model
+from utils_functions import fit_gaussian_process
 
 
 from emukit.core.acquisition import Acquisition
@@ -45,7 +45,7 @@ class ToyGraph(graph.GraphStructure):
         self.Y = np.asarray(observational_samples['Y'])[:,np.newaxis]
         self.Z = np.asarray(observational_samples['Z'])[:,np.newaxis]
 
-    def define_SEM(self):
+    def define_sem(self):
 
         def fx(epsilon, **kwargs):
           return epsilon[0]
@@ -92,7 +92,7 @@ class ToyGraph(graph.GraphStructure):
         return dict_ranges
 
 
-    def fit_all_models(self):
+    def fit_all_gaussian_processes(self):
         functions = {}
 
         num_features = self.Z.shape[1]
@@ -114,7 +114,7 @@ class ToyGraph(graph.GraphStructure):
         return functions
 
 
-    def refit_models(self, observational_samples):
+    def fit_all_gaussian_processes(self, observational_samples):
         X = np.asarray(observational_samples['X'])[:,np.newaxis]
         Z = np.asarray(observational_samples['Z'])[:,np.newaxis]
         Y = np.asarray(observational_samples['Y'])[:,np.newaxis]

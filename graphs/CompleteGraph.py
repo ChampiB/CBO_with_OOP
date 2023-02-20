@@ -15,7 +15,7 @@ import copy
 import seaborn as sns
 
 from . import graph
-from utils_functions import fit_single_GP_model
+from utils_functions import fit_gaussian_process
 
 
 from emukit.core.acquisition import Acquisition
@@ -46,7 +46,7 @@ class CompleteGraph(graph.GraphStructure):
         self.F = np.asarray(observational_samples['F'])[:,np.newaxis]
         self.Y = np.asarray(observational_samples['Y'])[:,np.newaxis]
 
-    def define_SEM(self):
+    def define_sem(self):
 
         def fU1(epsilon, **kwargs):
           return epsilon[0]
@@ -123,7 +123,7 @@ class CompleteGraph(graph.GraphStructure):
         return dict_ranges
 
 
-    def fit_all_models(self):
+    def fit_all_gaussian_processes(self):
         functions = {}
         inputs_list = [self.B, self.F, np.hstack((self.D,self.C)), np.hstack((self.B,self.C)), np.hstack((self.A,self.C,self.E)), np.hstack((self.B,self.C,self.D)), 
                     np.hstack((self.D,self.E,self.C,self.A)),np.hstack((self.B,self.E,self.C,self.A)), np.hstack((self.A,self.B,self.C,self.D,self.E)), 
@@ -137,12 +137,12 @@ class CompleteGraph(graph.GraphStructure):
         for i in range(len(inputs_list)):
             X = inputs_list[i]
             Y = output_list[i]
-            functions[name_list[i]] = fit_single_GP_model(X, Y, parameter_list[i])
+            functions[name_list[i]] = fit_gaussian_process(X, Y, parameter_list[i])
 
         return functions
 
 
-    def refit_models(self, observational_samples):
+    def fit_all_gaussian_processes(self, observational_samples):
         A = np.asarray(observational_samples['A'])[:,np.newaxis]
         B = np.asarray(observational_samples['B'])[:,np.newaxis]
         C = np.asarray(observational_samples['C'])[:,np.newaxis]
@@ -164,7 +164,7 @@ class CompleteGraph(graph.GraphStructure):
         for i in range(len(inputs_list)):
             X = inputs_list[i]
             Y = output_list[i]
-            functions[name_list[i]] = fit_single_GP_model(X, Y, parameter_list[i])
+            functions[name_list[i]] = fit_gaussian_process(X, Y, parameter_list[i])
   
         return functions
 

@@ -45,7 +45,7 @@ class MonitoringCBO:
             interventions = list_interventional_ranges(cbo.graph.get_interventional_ranges(), cbo.exploration_set[s])
             target_function, space = Intervention_function(
                 get_interventional_dict(cbo.exploration_set[s]),
-                model=cbo.graph.define_SEM(),
+                model=cbo.graph.define_sem(),
                 target_variable='Y',
                 min_intervention=interventions[0],
                 max_intervention=interventions[1]
@@ -155,7 +155,7 @@ class MonitoringCBO:
             np.vstack((self.data_x_list[intervention], acquisition_xs[intervention]))
         self.data_y_list[intervention] = \
             np.vstack((self.data_y_list[intervention], target_ys))
-        self.cbo.model_list[intervention].set_data(data_x, data_y)
+        self.cbo.models[intervention].set_data(data_x, data_y)
 
     def compute_target_function(self, intervention_set, intervention, acquisition_xs):
         """

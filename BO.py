@@ -52,9 +52,9 @@ def NonCausal_BO(num_trials, graph, dict_ranges, interventional_data_x, interven
 
 	## Compute target function and space parameters
 	target_function, space_parameters = Intervention_function(get_interventional_dict(intervention_variables),
-																model = graph.define_SEM(), target_variable = 'Y', 
-																min_intervention = list_interventional_ranges(graph.get_interventional_ranges(), intervention_variables)[0],
-																max_intervention = list_interventional_ranges(graph.get_interventional_ranges(), intervention_variables)[1])
+                                                              model = graph.define_sem(), target_variable ='Y',
+                                                              min_intervention = list_interventional_ranges(graph.get_interventional_ranges(), intervention_variables)[0],
+                                                              max_intervention = list_interventional_ranges(graph.get_interventional_ranges(), intervention_variables)[1])
 
 
 	if Causal_prior==False:

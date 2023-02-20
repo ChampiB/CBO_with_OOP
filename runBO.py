@@ -79,7 +79,7 @@ if experiment == 'toy_graph':
 
 
 ## Fitting all the models required to compute do-effects
-functions = graph.fit_all_models()
+functions = graph.fit_all_gaussian_processes()
 
 
 ## Define the set of manipulative variables

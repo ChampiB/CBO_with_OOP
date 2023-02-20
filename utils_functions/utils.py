@@ -81,14 +81,14 @@ def find_current_global(current_y, dict_interventions, task):
 
     for variable, value in current_y.items():
         if len(value) > 0:
-          if task == 'min':
-            dict_values[variable] = np.min(current_y[variable])
-          else:
-            dict_values[variable] = np.max(current_y[variable])
+            if task == 'min':
+                dict_values[variable] = np.min(current_y[variable])
+            else:
+                dict_values[variable] = np.max(current_y[variable])
     if task == 'min':        
-      opt_variable = min(dict_values, key=dict_values.get)
+        opt_variable = min(dict_values, key=dict_values.get)
     else:
-      opt_variable = max(dict_values, key=dict_values.get)
+        opt_variable = max(dict_values, key=dict_values.get)
     
     opt_value = dict_values[opt_variable]
     return opt_value
@@ -105,9 +105,9 @@ def find_next_y_point(space, model, current_global_best, evaluated_set, costs_fu
     return y_acquisition, x_new    
 
 
-def fit_single_GP_model(X, Y, parameter_list):
-    kernel = RBF(X.shape[1], ARD=parameter_list[3], lengthscale=parameter_list[0], variance=parameter_list[1])
-    gp = GPRegression(X=X, Y=Y, kernel=kernel, noise_var=parameter_list[2])
+def fit_gaussian_process(x, y, parameter_list):
+    kernel = RBF(x.shape[1], ARD=parameter_list[3], lengthscale=parameter_list[0], variance=parameter_list[1])
+    gp = GPRegression(X=x, Y=y, kernel=kernel, noise_var=parameter_list[2])
     gp.likelihood.variance.fix(1e-2)
     gp.optimize()
     return gp
