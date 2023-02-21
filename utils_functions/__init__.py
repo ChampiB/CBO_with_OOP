@@ -1,8 +1,8 @@
 from .utils import *
 
-from .BO_functions import *
+from .bo_functions import *
 
-from .CBO_functions import *
+from .cbo_functions import *
 
 from .compute_update_do_functions import *
 

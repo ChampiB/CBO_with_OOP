@@ -1,52 +1,49 @@
+import numpy as np
+from collections import OrderedDict
 import sys
 sys.path.append("..") 
 
-## Import basic packages
-import numpy as np
-from collections import OrderedDict
 
-## Define a cost variable for each intervention
+# Define a cost variable for each intervention
 def cost_N_fix_equal(intervention_value, **kwargs):
-    fix_cost = 1.
-    return fix_cost
+    return 1.
+
 
 def cost_O_fix_equal(intervention_value, **kwargs):
-    fix_cost = 1.
-    return fix_cost
+    return 1.
+
 
 def cost_C_fix_equal(intervention_value, **kwargs):
-    fix_cost = 1.
-    return fix_cost
+    return 1.
+
 
 def cost_T_fix_equal(intervention_value, **kwargs):
-    fix_cost = 1.
-    return fix_cost
+    return 1.
+
 
 def cost_D_fix_equal(intervention_value, **kwargs):
-    fix_cost = 1.
-    return fix_cost
+    return 1.
 
 
-## Define a cost variable for each intervention
+# Define a cost variable for each intervention
 def cost_N_fix_different(intervention_value, **kwargs):
-    fix_cost = 1.
-    return fix_cost
+    return 1.
+
 
 def cost_O_fix_different(intervention_value, **kwargs):
-    fix_cost = 10.
-    return fix_cost
+    return 10.
+
 
 def cost_C_fix_different(intervention_value, **kwargs):
-    fix_cost = 2.
-    return fix_cost
+    return 2.
+
 
 def cost_T_fix_different(intervention_value, **kwargs):
-    fix_cost = 5.
-    return fix_cost
+    return 5.
+
 
 def cost_D_fix_different(intervention_value, **kwargs):
-    fix_cost = 20.
-    return fix_cost
+    return 20.
 
 
 

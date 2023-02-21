@@ -1,14 +1,4 @@
-## Import basic packages
 import numpy as np
-import pandas as pd
-from collections import OrderedDict
-import scipy
-import itertools
-from numpy.random import randn
-import copy
-import seaborn as sns
-
-import GPy
 from GPy.kern.src.stationary import Stationary
 from GPy.kern.src.psi_comp import PSICOMP_RBF, PSICOMP_RBF_GPU
 from GPy.core import Param
@@ -18,16 +8,14 @@ from GPy.kern.src.grid_kerns import GridRBF
 
 class CausalRBF(Stationary):
     """
-    Radial Basis Function kernel, aka squared-exponential, exponentiated quadratic or Gaussian kernel:
-
-    .. math::
-
-       k(r) = \sigma^2 \exp \\bigg(- \\frac{1}{2} r^2 \\bigg)
-
+    Radial Basis Function kernel, aka squared-exponential or Gaussian kernel: k(r) = sigma^2 exp(-0.5 r^2)
     """
     _support_GPU = True
-    def __init__(self, input_dim, variance_adjustment, variance=1., lengthscale=None, rescale_variance = 1., 
-                    ARD=False, active_dims=None, name='rbf', useGPU=False, inv_l=False):
+
+    def __init__(
+            self, input_dim, variance_adjustment, variance=1., lengthscale=None, rescale_variance=1.,
+            ARD=False, active_dims=None, name='rbf', useGPU=False, inv_l=False
+    ):
         super(CausalRBF, self).__init__(input_dim, variance, lengthscale, ARD, active_dims, name, useGPU=useGPU)
         if self.useGPU:
             self.psicomp = PSICOMP_RBF_GPU()
@@ -36,30 +24,23 @@ class CausalRBF(Stationary):
         self.use_invLengthscale = inv_l
         if inv_l:
             self.unlink_parameter(self.lengthscale)
-            self.inv_l = Param('inv_lengthscale',1./self.lengthscale**2, Logexp())
+            self.inv_l = Param('inv_lengthscale', 1. / self.lengthscale ** 2, Logexp())
             self.link_parameter(self.inv_l)
         self.variance_adjustment = variance_adjustment
         self.rescale_variance = Param('rescale_variance', rescale_variance, Logexp())
-        #self.link_parameter(self.rescale_variance)
-
-
 
     def to_dict(self):
         """
-        Convert the object into a json serializable dictionary.
-
-        Note: It uses the private method _save_to_input_dict of the parent.
-
+        Convert the object into a json serializable dictionary. Note, it uses the private method _save_to_input_dict of
+        the parent
         :return dict: json serializable dictionary containing the needed information to instantiate the object
         """
-
         input_dict = super(CausalRBF, self)._save_to_input_dict()
         input_dict["class"] = "GPy.kern.RBF"
         input_dict["inv_l"] = self.use_invLengthscale
-        if input_dict["inv_l"] == True:
+        if input_dict["inv_l"] is True:
             input_dict["lengthscale"] = np.sqrt(1 / float(self.inv_l))
         return input_dict
-
 
     def K(self, X, X2=None):
         """
@@ -97,7 +78,6 @@ class CausalRBF(Stationary):
                 diagonal_terms = value[:,0]
         return self.variance + diagonal_terms
 
-
     def K_of_r(self, r):
         return self.variance * np.exp(-0.5 * r**2)
 
@@ -122,13 +102,12 @@ class CausalRBF(Stationary):
         return super(CausalRBF, self).__setstate__(state)
 
     def spectrum(self, omega):
-        assert self.input_dim == 1 #TODO: higher dim spectra?
+        assert self.input_dim == 1
         return self.variance*np.sqrt(2*np.pi)*self.lengthscale*np.exp(-self.lengthscale*2*omega**2/2)
 
     def parameters_changed(self):
         if self.use_invLengthscale: self.lengthscale[:] = 1./np.sqrt(self.inv_l+1e-200)
         super(CausalRBF,self).parameters_changed()
-
 
     def get_one_dimensional_kernel(self, dim):
         """
@@ -137,9 +116,9 @@ class CausalRBF(Stationary):
         oneDkernel = GridRBF(input_dim=1, variance=self.variance.copy(), originalDimensions=dim)
         return oneDkernel
 
-    #---------------------------------------#
-    #             PSI statistics            #
-    #---------------------------------------#
+    # --------------------------------------- #
+    #             PSI statistics              #
+    # --------------------------------------- #
 
     def psi0(self, Z, variational_posterior):
         return self.psicomp.psicomputations(self, Z, variational_posterior)[0]

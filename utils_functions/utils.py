@@ -99,7 +99,7 @@ def find_next_y_point(space, model, current_global_best, evaluated_set, costs_fu
     # corresponding y value for the acquisition function
     cost_acquisition = Cost(costs_functions, evaluated_set)
     optimizer = CausalGradientAcquisitionOptimizer(space)
-    acquisition = CausalExpectedImprovement(current_global_best, task, model)/cost_acquisition
+    acquisition = CausalExpectedImprovement(current_global_best, task, model) / cost_acquisition
     x_new, _ = optimizer.optimize(acquisition)
     y_acquisition = acquisition.evaluate(x_new)  
     return y_acquisition, x_new    

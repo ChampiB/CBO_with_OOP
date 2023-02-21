@@ -4,13 +4,14 @@ from utils_functions import *
 from numpy.random import uniform
 
 
-# TODO self.graph.fit_all_gaussian_processes()
+# TODO self.graph.fit_all_gaussian_processes() => fit a Gaussian process using GPy
 
-# TODO self.mean_functions_list, self.var_functions_list = self.update_all_do_functions(functions)
-# TODO self.update_all_gaussian_processes()
-# TODO self.update_gaussian_process_of_last_intervention()
+# TODO self.update_all_do_functions(functions) => compute all mean and var functions using do-calculus, how?
 
-# TODO self.model_list[intervention].optimize()
+# TODO self.update_all_gaussian_processes() => Create new Gaussian processes model, i.e., no fitting
+# TODO self.update_gaussian_process_of_last_intervention() => Create a new Gaussian process model, i.e., no fitting
+
+# TODO self.model_list[intervention].optimize() => fit the Gaussian process
 
 class CBO:
 	"""
