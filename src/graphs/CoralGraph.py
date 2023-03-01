@@ -3,11 +3,11 @@ from scipy.stats import gamma
 from sklearn.linear_model import LinearRegression
 from sklearn.mixture import GaussianMixture
 from . import graph
-from utils_functions import fit_gaussian_process
+from src.utils_functions import fit_gaussian_process
 from .CoralGraph_DoFunctions import *
 from .CoralGraph_CostFunctions import define_costs
 import sys
-sys.path.append("..")
+sys.path.append("../..")
 
 
 class CoralGraph(graph.GraphStructure):
@@ -63,6 +63,23 @@ class CoralGraph(graph.GraphStructure):
             ["N", "C", "T", "S", "N", "L", "TE"],
             ["N", "T", "D", "S"],
             ["C", "T", "D", "S", "N", "L", "TE"]
+        ]
+        self.fit_parameters = [
+            [1., 1., 10., False],
+            [1., 1., 1., True],
+            [1., 1., 1., True],
+            [1., 1., 1., True],
+            [1., 1., 10., True],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False]
         ]
 
         # Creating linear regression models and fit them on the available data.
@@ -171,47 +188,29 @@ class CoralGraph(graph.GraphStructure):
         if measurements is None:
             measurements = self.measurements
 
-        # Fit all gaussian processes based on the available measurements
+        # Retrieve the measurements associated to each variable in the graph
         var_measurements = {
-            var_name: np.asarray(measurements[var_name])[:, np.newaxis] for var_name in self.var_names
+            var_name: np.asarray(measurements[var_name])[:, np.newaxis]
+            for var_name in self.var_names
         }
 
+        # For each variable in the graph, concatenate the measurements of all the variables it depends on
         xs = [
             np.hstack([var_measurements[var_name] for var_name in dependencies])
             for dependencies in self.fit_dependencies
         ]
 
-        outputs = [self.measurements["Y"]] * len(xs)
+        # For each variable in the graph, retrieve the measurements of the target variable Y
+        outputs = [self.measurements["Y"]] * len(self.fit_dependencies)
 
-        names = [
-            'gp_N', 'gp_O_S_T_D_TE', 'gp_C_N_L_TE', 'gp_T_S', 'gp_D_S', 'gp_N_O_S_T_D_TE', 'gp_N_T_S', 'gp_N_D_S',
-            'gp_O_C_N_L_TE_S_T_D', 'gp_T_C_S_TE_L_N', 'gp_T_D_S', 'gp_C_D_S_TE_L_N', 'gp_N_C_T_S_N_L_TE', 'gp_N_T_D_S',
-            'gp_C_T_D_S_N_L_TE'
-        ]
+        # Create the name of the Gaussian process corresponding to each variable in the graph
+        names = ["gp_" + "_".join(dependencies) for dependencies in self.fit_dependencies]
 
-        parameters = [
-            [1., 1., 10., False],
-            [1., 1., 1., True],
-            [1., 1., 1., True],
-            [1., 1., 1., True],
-            [1., 1., 10., True],
-            [1., 1., 1., False],
-            [1., 1., 1., False],
-            [1., 1., 1., False],
-            [1., 1., 1., False],
-            [1., 1., 1., False],
-            [1., 1., 1., False],
-            [1., 1., 1., False],
-            [1., 1., 1., False],
-            [1., 1., 1., False],
-            [1., 1., 1., False]
-        ]
-
-        # Fit all conditional models
-        functions = {}
-        for name, x, output, parameter in zip(names, xs, outputs, parameters):
-            functions[name] = fit_gaussian_process(x, output, parameter)
-        return functions
+        # Fit all conditional Gaussian processes
+        return {
+            name: fit_gaussian_process(x, output, parameter)
+            for name, x, output, parameter in zip(names, xs, outputs, self.fit_parameters)
+        }
 
     @staticmethod
     def get_cost_structure(type_cost):

@@ -1,34 +1,10 @@
-import sys
-sys.path.append("..") 
-
-## Import basic packages
-import numpy as np
-import pandas as pd
-from matplotlib import pylab as plt
-from collections import OrderedDict
-from matplotlib import cm
-import scipy
-import itertools
-import sys
-from numpy.random import randn
-import copy
-import seaborn as sns
-
 from . import graph
-from utils_functions import fit_gaussian_process
-
-
-from emukit.core.acquisition import Acquisition
-
-## Import GP python packages
-import GPy
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
-
 from .ToyGraph_DoFunctions import *
 from .ToyGraph_CostFunctions import define_costs
-
-
+import sys
+sys.path.append("../..")
 
 
 class ToyGraph(graph.GraphStructure):
@@ -56,7 +32,7 @@ class ToyGraph(graph.GraphStructure):
         def fy(epsilon, Z, **kwargs):
           return np.cos(Z) - np.exp(-Z/20.) + epsilon[2]  
 
-        graph = OrderedDict ([
+        graph = OrderedDict([
           ('X', fx),
           ('Z', fz),
           ('Y', fy),
@@ -64,33 +40,21 @@ class ToyGraph(graph.GraphStructure):
 
         return graph
 
-
     def get_sets(self):
         MIS = [['X'], ['Z']]
         POMIS = [['Z']]
         manipulative_variables = ['X', 'Z']
         return MIS, POMIS, manipulative_variables
 
-
     def get_set_BO(self):
         manipulative_variables = ['X', 'Z']
         return manipulative_variables
 
-
     def get_interventional_ranges(self):
-        min_intervention_x = -5
-        max_intervention_x = 5
-
-        min_intervention_z = -5
-        max_intervention_z = 20
-
-
-        dict_ranges = OrderedDict ([
-          ('X', [min_intervention_x, max_intervention_x]),
-          ('Z', [min_intervention_z, max_intervention_z]),
+        return OrderedDict([
+            ('X', [-5, 5]),
+            ('Z', [-5, 20]),
         ])
-        return dict_ranges
-
 
     def fit_all_gaussian_processes(self):
         functions = {}
@@ -112,7 +76,6 @@ class ToyGraph(graph.GraphStructure):
             ])
 
         return functions
-
 
     def fit_all_gaussian_processes(self, observational_samples):
         X = np.asarray(observational_samples['X'])[:,np.newaxis]
@@ -137,13 +100,11 @@ class ToyGraph(graph.GraphStructure):
             ('X', [])
             ])
 
-
         return functions
 
     def get_cost_structure(self, type_cost):
         costs = define_costs(type_cost)
         return costs
-
 
     def get_all_do(self):
         do_dict = {}

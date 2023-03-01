@@ -1,3 +1,5 @@
+from GPy.core import Mapping
+from emukit.model_wrappers import GPyModelWrapper
 from utils_functions import *
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
@@ -14,16 +16,19 @@ class GaussianProcessType(IntEnum):
 
 
 class GaussianProcessFactory:
+    """
+    A class allowing the creation of Gaussian processes
+    """
 
     @staticmethod
-    def create(gp_type, x, y, parameters, emukit_wrapper):
+    def create(gp_type, x, y, parameters=None, emukit_wrapper=False):
         """
         Create the Gaussian process corresponding to the type passed as parameters
         :param gp_type: the type of Gaussian process to create
-        :param x: the
-        :param y:
+        :param x: the input data
+        :param y: the output data
         :param parameters: the parameters of the Gaussian process to create
-        :param emukit_wrapper:
+        :param emukit_wrapper: whether to wrap the Gaussian process to make it compatible with the emukit package
         :return: the created Gaussian process
         """
 
@@ -49,16 +54,15 @@ class GaussianProcessFactory:
         return gp
 
     @staticmethod
-    def create_causal_gp(x, y, parameters):
+    def create_non_causal_gp(x, y, _):
         # NON_CAUSAL_GAUSSIAN_PROCESS
         kernel = RBF(x.shape[1], lengthscale=1., variance=1.)
         return GPRegression(x, y, kernel, noise_var=1e-10)
 
     @staticmethod
-    def create_non_causal_gp(x, y, parameters):
+    def create_causal_gp(x, y, parameters):
         # CAUSAL_GAUSSIAN_PROCESS
-        mean_function = parameters[0]
-        var_function = parameters[1]
+        mean_function, var_function = parameters
 
         mf = Mapping(x.shape[1], 1)
         mf.f = mean_function

@@ -1,29 +1,13 @@
 import sys
-sys.path.append("..") 
+sys.path.append("../..")
 
 ## Import basic packages
-import numpy as np
-import pandas as pd
-from matplotlib import pylab as plt
 from collections import OrderedDict
-from matplotlib import cm
-import scipy
-import itertools
-import sys
-from numpy.random import randn
-import copy
-import seaborn as sns
 
 from . import graph
-from utils_functions import fit_gaussian_process
-
-
-from emukit.core.acquisition import Acquisition
+from src.utils_functions import fit_gaussian_process
 
 ## Import GP python packages
-import GPy
-from GPy.kern import RBF
-from GPy.models.gp_regression import GPRegression
 
 from .CompleteGraph_DoFunctions import *
 from .CompleteGraph_CostFunctions import define_costs

@@ -1,17 +1,12 @@
 from pathlib import Path
-from cbo.MonitoringCBO import MonitoringCBO
-from utils_functions import *
+
+from src.DoCalculus import DoCalculus
+from src.Monitor import Monitor
+from src.utils_functions import *
 from numpy.random import uniform
+from src.GaussianProcessFactory import GaussianProcessFactory as GPFactory
+from src.GaussianProcessFactory import GaussianProcessType as GPType
 
-
-# TODO self.graph.fit_all_gaussian_processes() => fit a Gaussian process using GPy
-
-# TODO self.update_all_do_functions(functions) => compute all mean and var functions using do-calculus, how?
-
-# TODO self.update_all_gaussian_processes() => Create new Gaussian processes model, i.e., no fitting
-# TODO self.update_gaussian_process_of_last_intervention() => Create a new Gaussian process model, i.e., no fitting
-
-# TODO self.model_list[intervention].optimize() => fit the Gaussian process
 
 class CBO:
 	"""
@@ -29,10 +24,10 @@ class CBO:
 		# Store useful arguments.
 		self.max_n = args.initial_num_obs_samples + 50
 		self.initial_num_obs_samples = args.initial_num_obs_samples
-		self.num_interventions = args.num_interventions
-		self.causal_prior = args.causal_prior
+		self.gp_type = GPType.CAUSAL_GP if args.gp_type else GPType.NON_CAUSAL_GP
 		self.num_trials = args.num_trials
 		self.exploration_set = eval(args.exploration_set)
+		self.es_size = len(self.exploration_set)
 		self.task = args.task
 		self.num_additional_observations = args.num_additional_observations
 		self.type_cost = args.type_cost
@@ -55,15 +50,31 @@ class CBO:
 		self.costs = self.graph.get_cost_structure(type_cost=self.type_cost)
 
 		# Get the path to the saving directory, and create it if it does not exist.
-		self.saving_dir = \
-			get_saving_dir(args.experiment, args.type_cost, args.initial_num_obs_samples, args.num_interventions)
+		self.saving_dir = self.get_saving_dir(args.experiment, args.num_interventions)
 		Path(self.saving_dir).mkdir(parents=True, exist_ok=True)
 
+		# Get the interventions' name for each intervention in the exploration_set
+		self.interventions = ["".join(variables) for variables in self.exploration_set]
+
+		# For each Gaussian process, initialise the mean and variance of x
+		self.x_mean = {i: {} for i in self.interventions}
+		self.x_var = {i: {} for i in self.interventions}
+
 		# Create the monitor that will keep track of the CBO performance.
-		self.monitor = MonitoringCBO(self, verbose=verbose)
+		self.monitor = Monitor(self, verbose=verbose)
 
 		# Store verbose mode.
 		self.verbose = verbose
+
+	def get_saving_dir(self, experiment, num_interventions):
+		"""
+		Getter
+		:param experiment: the experiment to run
+		:param num_interventions: the number of interventions
+		:return: the path to the saving directory
+		"""
+		cost_types = ["fix_equal", "fix_different", "fix_different_variable", "fix_equal_variable"]
+		return f"./data/{experiment}/{cost_types[self.type_cost]}/{self.initial_num_obs_samples}/{num_interventions}/"
 
 	def run(self):
 		"""
@@ -72,7 +83,7 @@ class CBO:
 
 		# Display information about the experiment being run, if requested by the user.
 		if self.verbose is True:
-			print(f"Exploring {self.exploration_set} with CEO and Causal prior = {self.causal_prior}")
+			print(f"Exploring {self.exploration_set} with CEO and Causal prior = {self.gp_type}")
 
 		# Fit all the Gaussian processes using the available data.
 		self.graph.fit_all_gaussian_processes()
@@ -98,7 +109,7 @@ class CBO:
 		if self.verbose is True:
 			print('=================================== Saved results ===================================')
 			print('exploration_set: ', self.exploration_set)
-			print('causal_prior: ', self.causal_prior)
+			print('causal_prior: ', self.gp_type)
 			print('type_cost: ', self.type_cost)
 			print('total_time: ', self.monitor.total_time)
 			print('folder: ', self.saving_dir)
@@ -207,45 +218,42 @@ class CBO:
 		"""
 
 		# Create the lists of mean and variance functions.
-		mean_functions = []
-		var_functions = []
-
-		# Update the mean and variance functions.
-		for j in range(len(self.exploration_set)):
-			mean_functions.append(update_mean_fun(
-				self.graph, functions, self.monitor.dict_interventions[j], self.measurements, self.monitor.x_dict_mean
-			))
-			var_functions.append(update_var_fun(
-				self.graph, functions, self.monitor.dict_interventions[j], self.measurements, self.monitor.x_dict_var
-			))
+		mean_functions = [
+			DoCalculus.update_mean_fun(self.graph, functions, self.interventions[j], self.measurements, self.x_mean)
+			for j in range(self.es_size)
+		]
+		var_functions = [
+			DoCalculus.update_var_fun(self.graph, functions, self.interventions[j], self.measurements, self.x_var)
+			for j in range(self.es_size)
+		]
 		return mean_functions, var_functions
 
 	def update_all_gaussian_processes(self):
 		"""
 		Update all the Gaussian processes using the newly available data
 		"""
-		self.models.clear()
-		for s in range(len(self.exploration_set)):
-			model = update_gaussian_processes(
-				self.mean_functions[s],
-				self.var_functions[s],
-				self.monitor.data_x_list[s],
-				self.monitor.data_y_list[s],
-				self.causal_prior
+		self.models = [
+			GPFactory.create(
+				self.gp_type,
+				self.monitor.data_x[s],
+				self.monitor.data_y[s],
+				[self.mean_functions[s], self.var_functions[s]],
+				emukit_wrapper=True
 			)
-			self.models.append(model)
+			for s in range(self.es_size)
+		]
 
 	def update_gaussian_process_of_last_intervention(self):
 		"""
 		Update only the Gaussian process corresponding to the last intervention performed
 		"""
 		last_intervention = self.monitor.last_intervention
-		self.models[last_intervention] = update_gaussian_processes(
-			self.mean_functions[last_intervention],
-			self.var_functions[last_intervention],
-			self.monitor.data_x_list[last_intervention],
-			self.monitor.data_y_list[last_intervention],
-			self.causal_prior
+		self.models[last_intervention] = GPFactory.create(
+			self.gp_type,
+			self.monitor.data_x[last_intervention],
+			self.monitor.data_y[last_intervention],
+			[self.mean_functions[last_intervention], self.var_functions[last_intervention]],
+			emukit_wrapper=True
 		)
 
 	def compute_best_acquisition_values(self, current_best):
@@ -278,7 +286,7 @@ class CBO:
 		Find the current best solution found by CBO
 		:return: the current best solution
 		"""
-		return find_current_global(self.monitor.current_best_y, self.monitor.dict_interventions, self.task)
+		return find_current_global(self.monitor.current_best_y, self.interventions, self.task)
 
 	def select_next_intervention(self, acquisition_ys):
 		"""
@@ -298,5 +306,8 @@ class CBO:
 		:param acquisition_xs: the values of x that maximise the acquisition function
 		:return: the intervention's cost
 		"""
-		x = get_new_dict_x(acquisition_xs[intervention], self.monitor.dict_interventions[intervention])
+		x = {
+			intervention: acquisition_xs[intervention][0, i]
+			for i, intervention in enumerate(self.interventions[intervention])
+		}
 		return total_cost(intervention_set, self.costs, x)

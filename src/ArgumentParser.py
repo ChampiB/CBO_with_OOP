@@ -1,8 +1,8 @@
 from numpy import random
-from argparse import ArgumentParser
+from argparse import ArgumentParser as ArgParser
 
 
-class ArgumentParserCBO:
+class ArgumentParser:
     """
     A class used to parse the argument of the script called: 'runCBO.py'.
     """
@@ -11,7 +11,7 @@ class ArgumentParserCBO:
         """
         Create the parser
         """
-        parser = ArgumentParser(description='This script running the Causal Bayesian Optimisation (CBO) algorithm.')
+        parser = ArgParser(description='This script running the Causal Bayesian Optimisation (CBO) algorithm.')
         help_msg = "An integer representing the initial number of observational samples."
         parser.add_argument('--initial_num_obs_samples', default=100, type=int, help=help_msg)
         help_msg = "An integer representing the size of the initial interventional dataset."

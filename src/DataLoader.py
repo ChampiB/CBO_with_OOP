@@ -1,10 +1,10 @@
 import numpy as np
 import os.path
-from graphs import *
+from src.graphs import *
 import pandas as pd
 
 
-class DataLoaderCBO:
+class DataLoader:
     """
     A class used to load the measurement and causal graph of an experiment.
     """

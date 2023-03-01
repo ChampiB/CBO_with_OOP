@@ -1,8 +1,8 @@
 import time
-from utils_functions import *
+from src.utils_functions import *
 
 
-class MonitoringCBO:
+class Monitor:
     """
     A class used to monitor the CBO agent.
     """
@@ -20,17 +20,20 @@ class MonitoringCBO:
 
         # Get the initial optimal solution and the interventional data corresponding to a random permutation of the
         # interventional data with seed given by name_index
-        self.data_x_list, self.data_y_list, best_intervention_value, opt_y, best_variable = \
+        self.data_x, self.data_y, best_intervention_value, opt_y, best_variable = \
             define_initial_data_CBO(
                 cbo.interventions, cbo.num_interventions, eval(cbo.exploration_set), cbo.name_index, cbo.task
             )
         self.current_cost = [0.]
         self.global_opt = [opt_y]
-        self.current_best_x, self.current_best_y, self.x_dict_mean, self.x_dict_var, self.dict_interventions = \
-            initialise_dicts(cbo.exploration_set, cbo.task)
+
+        # For each Gaussian process, initialise the x-position that leads to the best acquisition value
+        self.current_best_x = {i: [np.inf if cbo.task == 'min' else -np.inf] for i in self.cbo.interventions}
+        self.current_best_y = copy.deepcopy(self.current_best_x)
         self.current_best_y[best_variable].append(opt_y)
         self.current_best_x[best_variable].append(best_intervention_value)
 
+        # Store important metrics
         self.observed = 0
         self.trial_intervened = 0.
         self.cumulative_cost = 0.
@@ -42,13 +45,15 @@ class MonitoringCBO:
 
         # Define intervention function
         for s in range(len(cbo.exploration_set)):
-            interventions = list_interventional_ranges(cbo.graph.get_interventional_ranges(), cbo.exploration_set[s])
+            ranges = cbo.graph.get_interventional_ranges()
+            min_ranges = [ranges[intervention][0] for intervention in cbo.exploration_set[s]]
+            max_ranges = [ranges[intervention][1] for intervention in cbo.exploration_set[s]]
             target_function, space = Intervention_function(
-                get_interventional_dict(cbo.exploration_set[s]),
+                {intervention: '' for intervention in cbo.exploration_set[s]},
                 model=cbo.graph.define_sem(),
                 target_variable='Y',
-                min_intervention=interventions[0],
-                max_intervention=interventions[1]
+                min_intervention=min_ranges,
+                max_intervention=max_ranges
             )
             self.target_function_list.append(target_function)
             self.space_list.append(space)
@@ -118,12 +123,12 @@ class MonitoringCBO:
         self.add_intervention_data(target_ys, intervention, acquisition_xs)
 
         # Update the dict storing the current optimal solution.
-        var_to_intervene = self.dict_interventions[intervention]
+        var_to_intervene = self.cbo.interventions[intervention]
         self.current_best_x[var_to_intervene].append(acquisition_xs[intervention][0][0])
         self.current_best_y[var_to_intervene].append(target_ys[0][0])
 
         # Find the new current best solution.
-        current_best = find_current_global(self.current_best_y, self.dict_interventions, self.cbo.task)
+        current_best = find_current_global(self.current_best_y, self.cbo.interventions, self.cbo.task)
 
         # Otherwise, the cost and optimal reward are provided as parameters.
         self.global_opt.append(current_best)
@@ -148,13 +153,11 @@ class MonitoringCBO:
         :param intervention: the intervention perform
         :param acquisition_xs: the values of x that produces the highest acquisition values
         """
-        data_x = np.append(self.data_x_list[intervention], acquisition_xs[intervention], axis=0)
-        data_y = np.append(self.data_y_list[intervention], target_ys, axis=0)
+        data_x = np.append(self.data_x[intervention], acquisition_xs[intervention], axis=0)
+        data_y = np.append(self.data_y[intervention], target_ys, axis=0)
 
-        self.data_x_list[intervention] = \
-            np.vstack((self.data_x_list[intervention], acquisition_xs[intervention]))
-        self.data_y_list[intervention] = \
-            np.vstack((self.data_y_list[intervention], target_ys))
+        self.data_x[intervention] = np.vstack((self.data_x[intervention], acquisition_xs[intervention]))
+        self.data_y[intervention] = np.vstack((self.data_y[intervention], target_ys))
         self.cbo.models[intervention].set_data(data_x, data_y)
 
     def compute_target_function(self, intervention_set, intervention, acquisition_xs):
@@ -180,7 +183,7 @@ class MonitoringCBO:
         """
         Save the results of the monitored CBO agent
         """
-        index = f"{self.cbo.exploration_set}_{self.cbo.causal_prior}_{self.cbo.name_index}"
+        index = f"{self.cbo.exploration_set}_{self.cbo.gp_type}_{self.cbo.name_index}"
         np.save(self.cbo.saving_dir + f"cost_{index}.npy", self.current_cost)
         np.save(self.cbo.saving_dir + f"best_x_{index}.npy", self.current_best_x)
         np.save(self.cbo.saving_dir + f"best_y_{index}.npy", self.current_best_y)

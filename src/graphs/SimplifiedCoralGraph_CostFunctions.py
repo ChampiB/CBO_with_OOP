@@ -1,7 +1,7 @@
 import numpy as np
 from collections import OrderedDict
 import sys
-sys.path.append("..") 
+sys.path.append("../..")
 
 
 # Define a cost variable for each intervention
