@@ -16,15 +16,16 @@ def sample_from_model(model, epsilon=None):
     :return: A dictionary of the samples obtained from the SEM in the format {node_name: sample_value}
     """
     epsilon = randn(len(model)) if epsilon is None else epsilon
-    return {node: f(epsilon) for node, f in model.items()}
-    # TODO: Remove commented code after testing
-    # The **kwargs argument of the SEM functions seems unused so I updated this to a comprehension dict.
-    # However, I may have missed something there so this is commented out in case we need to revert back to the
-    # previous version.
-    # sample = {}
-    # for variable, function in model.items():
-    #     sample[variable] = function(epsilon, **sample)
-    # return sample
+    # TODO: Find a better way to do this.
+    # At the moment **sample is used either as an unused **kwargs or as non-keyword arguments
+    # in the SEM functions. Because the SEM is an ordered dict, the behaviour of each function
+    # is dependent on its node name, which could lead to a range of weird and unexpected behaviours.
+    # A better way to implement the SEM would be to have a concept of directed graph instead of dict
+    # where we can update the values in the order specified by the graph (not the name of the nodes).
+    sample = {}
+    for variable, function in model.items():
+        sample[variable] = function(epsilon, **sample)
+    return sample
 
 
 def intervene_dict(model, **interventions):
