@@ -41,7 +41,7 @@ def compute_coverage(observational_samples, manipulative_variables, dict_ranges)
     return alpha_coverage, hull_obs, coverage_total
 
 
-def define_initial_data_CBO(interventional_data, num_interventions, exploration_set, name_index, task):
+def define_initial_data_cbo(interventional_data, num_interventions, exploration_set, name_index, task):
 
     data_list = []
     data_x_list = []

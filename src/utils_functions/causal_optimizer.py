@@ -16,11 +16,10 @@ class CausalGradientAcquisitionOptimizer(AcquisitionOptimizerBase):
     """ Optimizes the acquisition function using a quasi-Newton method (L-BFGS).
     Can be used for continuous acquisition functions.
     """
-    def __init__(self, space: ParameterSpace, num_anchor_points: int=100) -> None:
+    def __init__(self, space: ParameterSpace, num_anchor_points=100):
         """
         :param space: The parameter space spanning the search problem.
         """
-        #print('self.num_anchor_points', num_anchor_points)
         self.num_anchor_points = num_anchor_points
         super().__init__(space)
 

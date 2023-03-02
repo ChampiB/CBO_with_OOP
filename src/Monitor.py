@@ -1,5 +1,6 @@
 import time
 from src.utils_functions import *
+import copy
 
 
 class Monitor:
@@ -21,7 +22,7 @@ class Monitor:
         # Get the initial optimal solution and the interventional data corresponding to a random permutation of the
         # interventional data with seed given by name_index
         self.data_x, self.data_y, best_intervention_value, opt_y, best_variable = \
-            define_initial_data_CBO(
+            define_initial_data_cbo(
                 cbo.interventions, cbo.num_interventions, eval(cbo.exploration_set), cbo.name_index, cbo.task
             )
         self.current_cost = [0.]
@@ -48,7 +49,7 @@ class Monitor:
             ranges = cbo.graph.get_interventional_ranges()
             min_ranges = [ranges[intervention][0] for intervention in cbo.exploration_set[s]]
             max_ranges = [ranges[intervention][1] for intervention in cbo.exploration_set[s]]
-            target_function, space = Intervention_function(
+            target_function, space = intervention_function(
                 {intervention: '' for intervention in cbo.exploration_set[s]},
                 model=cbo.graph.define_sem(),
                 target_variable='Y',
