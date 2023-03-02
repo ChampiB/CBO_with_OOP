@@ -73,6 +73,8 @@ def compute_interventions(model, interventions, node_values, target_variable="Y"
 
     mutilated_model = intervene_dict(model, **interventions)
     np.random.seed(seed)
+    # TODO: it would probably be better to sample from the target variable only instead of sampling everything each
+    #  time, especially for large graphs
     samples = pd.DataFrame([sample_from_model(mutilated_model) for _ in range(num_samples)])
     return np.asarray(np.mean(samples[target_variable]))[np.newaxis, np.newaxis]
 
