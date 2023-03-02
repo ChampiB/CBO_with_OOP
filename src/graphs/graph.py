@@ -20,3 +20,11 @@ class GraphStructure:
     def get_do_function(self, function_name):
         raise NotImplementedError("Subclass should implement this.")
 
+    @staticmethod
+    def get_function_name(interventions):
+        """
+        Getter
+        :param interventions: the interventions for which the do-function's name is returned
+        :return: the do-function's name
+        """
+        return 'compute_do_' + "".join(interventions)

@@ -64,7 +64,7 @@ class CBO:
 		self.monitor = Monitor(self, verbose=verbose)
 
 		# Create the do-calculus engine.
-		self.do_calculus = DoCalculus()
+		self.do_calculus = DoCalculus(self)
 
 		# Store verbose mode.
 		self.verbose = verbose
@@ -131,10 +131,10 @@ class CBO:
 		self.measurements = self.measurements.append(self.get_new_observation())
 
 		# Fit the models using the newly available data.
-		functions = self.graph.fit_all_gaussian_processes(self.measurements)
+		gaussian_processes = self.graph.fit_all_gaussian_processes(self.measurements)
 
 		# Update the mean and variance functions to account for the new observational data.
-		self.mean_functions, self.var_functions = self.do_calculus.update_all_do_functions(functions)
+		self.mean_functions, self.var_functions = self.do_calculus.update_all_do_functions(gaussian_processes)
 
 		# Log the cost and optimal reward (i.e., as the agent is observing, it remains the same previous trial).
 		self.monitor.log_agent_performance()
