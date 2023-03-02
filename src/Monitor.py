@@ -1,4 +1,6 @@
 import time
+from functools import partial
+
 from src.utils_functions import *
 import copy
 
@@ -49,13 +51,10 @@ class Monitor:
             ranges = cbo.graph.get_interventional_ranges()
             min_ranges = [ranges[intervention][0] for intervention in cbo.exploration_set[s]]
             max_ranges = [ranges[intervention][1] for intervention in cbo.exploration_set[s]]
-            target_function, space = intervention_function(
-                {intervention: '' for intervention in cbo.exploration_set[s]},
-                model=cbo.graph.define_sem(),
-                target_variable='Y',
-                min_intervention=min_ranges,
-                max_intervention=max_ranges
-            )
+            # TODO: update this with new functions
+            interventions = {intervention: '' for intervention in cbo.exploration_set[s]}
+            space = get_parameter_space(interventions, min_ranges, max_ranges)
+            target_function = partial(compute_interventions, cbo.graph.define_sem(), interventions, target_variable='Y')
             self.target_function_list.append(target_function)
             self.space_list.append(space)
 
