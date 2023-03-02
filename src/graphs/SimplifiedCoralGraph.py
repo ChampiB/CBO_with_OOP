@@ -1,21 +1,16 @@
-import sys
-sys.path.append("../..")
-
-## Import basic packages
 from collections import OrderedDict
 import scipy
 from sklearn.linear_model import LinearRegression
 import sklearn.mixture
-
-from . import graph
+from graph import GraphStructure
 from src.utils_functions import fit_gaussian_process
-
-## Import GP python packages
-
 from .SimplifiedCoralGraph_DoFunctions import *
 from .SimplifiedCoralGraph_CostFunctions import define_costs
+import sys
+sys.path.append("../..")
 
-class SimplifiedCoralGraph(graph.GraphStructure):
+
+class SimplifiedCoralGraph(GraphStructure):
     """
     An instance of the class graph giving the graph structure in the Coral reef example 
     
@@ -49,7 +44,6 @@ class SimplifiedCoralGraph(graph.GraphStructure):
         true_TE = np.asarray(true_observational_samples['TE'])[:,np.newaxis]
         true_C = np.asarray(true_observational_samples['C'])[:,np.newaxis]
 
-
         self.reg_Y = LinearRegression().fit(np.hstack((true_L, true_N, true_P, true_O, true_C, true_CO, true_TE)), true_Y)
         self.reg_P = LinearRegression().fit(np.hstack((true_S,true_T, true_D, true_TE)), true_P)
         self.reg_O = LinearRegression().fit(np.hstack((true_S, true_T, true_D, true_TE)), true_O)
@@ -60,15 +54,25 @@ class SimplifiedCoralGraph(graph.GraphStructure):
         self.reg_S = LinearRegression().fit(true_TE, true_S)
         self.reg_TE = LinearRegression().fit(true_L, true_TE)
 
-
-        ## Define distributions for the exogenous variables
+        # Define distributions for the exogenous variables
         params_list = scipy.stats.gamma.fit(true_L)
-        self.dist_Light = scipy.stats.gamma(a = params_list[0], loc = params_list[1], scale = params_list[2])
+        self.dist_Light = scipy.stats.gamma(a=params_list[0], loc=params_list[1], scale=params_list[2])
 
         mixture = sklearn.mixture.GaussianMixture(n_components=3)
         mixture.fit(true_N)
         self.dist_Nutrients_PC1 = mixture
 
+        self.do_functions = {
+            'compute_do_N': compute_do_N, 'compute_do_O': compute_do_O, 'compute_do_C': compute_do_C,
+            'compute_do_T': compute_do_T, 'compute_do_D': compute_do_D, 'compute_do_NO': compute_do_NO,
+            'compute_do_NC': compute_do_NC, 'compute_do_NT': compute_do_NT, 'compute_do_ND': compute_do_ND,
+            'compute_do_OC': compute_do_OC, 'compute_do_OT': compute_do_OT, 'compute_do_OD': compute_do_OD,
+            'compute_do_TC': compute_do_TC, 'compute_do_TD': compute_do_TD, 'compute_do_CD': compute_do_CD,
+            'compute_do_NOC': compute_do_NOC, 'compute_do_NOT': compute_do_NOT, 'compute_do_NOD': compute_do_NOD,
+            'compute_do_NCT': compute_do_NCT, 'compute_do_NCD': compute_do_NCD, 'compute_do_NTD': compute_do_NTD,
+            'compute_do_OCT': compute_do_OCT, 'compute_do_OCD': compute_do_OCD, 'compute_do_CTD': compute_do_CTD,
+            'compute_do_OTD': compute_do_OTD
+        }
 
     def define_sem(self):
 
@@ -139,7 +143,6 @@ class SimplifiedCoralGraph(graph.GraphStructure):
 
         return graph
 
-
     def get_sets(self):
         MIS_1 = [['N'], ['O'], ['C'], ['T'], ['D']]
         MIS_2 = [['N', 'O'], ['N', 'C'], ['N', 'T'], ['N', 'D'], ['O', 'C'], ['O', 'T'], ['O', 'D'], ['T', 'C'], ['T', 'D'], ['C', 'D']]
@@ -156,11 +159,9 @@ class SimplifiedCoralGraph(graph.GraphStructure):
         manipulative_variables = ['N', 'O', 'C', 'T', 'D']
         return MIS, POMIS, manipulative_variables
 
-
     def get_set_BO(self):
         manipulative_variables = ['N', 'O', 'C', 'T', 'D']
         return manipulative_variables
-
 
     def get_interventional_ranges(self):
         min_intervention_N = -2 
@@ -187,7 +188,6 @@ class SimplifiedCoralGraph(graph.GraphStructure):
         ])
         return dict_ranges
 
-
     def fit_all_gaussian_processes(self):
         functions = {}
         inputs_list = [self.N, np.hstack((self.O,self.S, self.T,self.D,self.TE)), np.hstack((self.C,self.N, self.L,self.TE)), np.hstack((self.T,self.S)),
@@ -206,7 +206,6 @@ class SimplifiedCoralGraph(graph.GraphStructure):
                         [1.,1.,1., False], [1.,1.,1., False],[1.,1.,1., False], [1.,1.,1., False],[1.,1.,1., False], [1.,1.,1., False], [1.,1.,1., False],
                         [1.,1.,1., False],[1.,1.,1., False], [1.,1.,1., False]]
 
-
         ## Fit all conditional models
         for i in range(len(inputs_list)):
             X = inputs_list[i]
@@ -214,7 +213,6 @@ class SimplifiedCoralGraph(graph.GraphStructure):
             functions[name_list[i]] = fit_gaussian_process(X, Y, parameter_list[i])
 
         return functions
-
 
     def fit_all_gaussian_processes(self, observational_samples):
         Y = np.asarray(observational_samples['Y'])[:,np.newaxis]
@@ -247,7 +245,7 @@ class SimplifiedCoralGraph(graph.GraphStructure):
                         [1.,1.,1., False], [1.,1.,1., False],[1.,1.,1., False], [1.,1.,1., False],[1.,1.,1., False], [1.,1.,1., False], [1.,1.,1., False],
                         [1.,1.,1., False],[1.,1.,1., False], [1.,1.,1., False]]
 
-        ## Fit all conditional models
+        # Fit all conditional models
         for i in range(len(inputs_list)):
             X = inputs_list[i]
             Y = output_list[i]
@@ -259,39 +257,8 @@ class SimplifiedCoralGraph(graph.GraphStructure):
         costs = define_costs(type_cost)
         return costs
 
-
-    def get_all_do(self):
-        do_dict = {}
-        do_dict['compute_do_N'] = compute_do_N
-        do_dict['compute_do_O'] = compute_do_O
-        do_dict['compute_do_C'] = compute_do_C
-        do_dict['compute_do_T'] = compute_do_T
-        do_dict['compute_do_D'] = compute_do_D
-
-        do_dict['compute_do_NO'] = compute_do_NO
-        do_dict['compute_do_NC'] = compute_do_NC
-        do_dict['compute_do_NT'] = compute_do_NT
-        do_dict['compute_do_ND'] = compute_do_ND
-        do_dict['compute_do_OC'] = compute_do_OC
-        do_dict['compute_do_OT'] = compute_do_OT
-        do_dict['compute_do_OD'] = compute_do_OD
-        do_dict['compute_do_TC'] = compute_do_TC
-        do_dict['compute_do_TD'] = compute_do_TD
-        do_dict['compute_do_CD'] = compute_do_CD
-
-        do_dict['compute_do_NOC'] = compute_do_NOC
-        do_dict['compute_do_NOT'] = compute_do_NOT
-        do_dict['compute_do_NOD'] = compute_do_NOD
-        do_dict['compute_do_NCT'] = compute_do_NCT
-        do_dict['compute_do_NCD'] = compute_do_NCD
-        do_dict['compute_do_NTD'] = compute_do_NTD
-        do_dict['compute_do_OCT'] = compute_do_OCT
-        do_dict['compute_do_OCD'] = compute_do_OCD
-        do_dict['compute_do_CTD'] = compute_do_CTD
-        do_dict['compute_do_OTD'] = compute_do_OTD
-
-
-        return do_dict
+    def get_do_function(self, function_name):
+        return self.do_functions[function_name]
 
 
 

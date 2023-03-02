@@ -1,18 +1,13 @@
+from collections import OrderedDict
+from graph import GraphStructure
+from src.utils_functions import fit_gaussian_process
+from .CompleteGraph_DoFunctions import *
+from .CompleteGraph_CostFunctions import define_costs
 import sys
 sys.path.append("../..")
 
-## Import basic packages
-from collections import OrderedDict
 
-from . import graph
-from src.utils_functions import fit_gaussian_process
-
-## Import GP python packages
-
-from .CompleteGraph_DoFunctions import *
-from .CompleteGraph_CostFunctions import define_costs
-
-class CompleteGraph(graph.GraphStructure):
+class CompleteGraph(GraphStructure):
     """
     An instance of the class graph giving the graph structure in the synthetic example 
     
@@ -29,6 +24,12 @@ class CompleteGraph(graph.GraphStructure):
         self.E = np.asarray(observational_samples['E'])[:,np.newaxis]
         self.F = np.asarray(observational_samples['F'])[:,np.newaxis]
         self.Y = np.asarray(observational_samples['Y'])[:,np.newaxis]
+
+        self.do_functions = {
+            'compute_do_BDEF': compute_do_BDEF, 'compute_do_BDE': compute_do_BDE, 'compute_do_BD': compute_do_BD,
+            'compute_do_BE': compute_do_BE, 'compute_do_DE': compute_do_DE, 'compute_do_B': compute_do_B,
+            'compute_do_D': compute_do_D, 'compute_do_E': compute_do_E
+        }
 
     def define_sem(self):
 
@@ -72,18 +73,15 @@ class CompleteGraph(graph.GraphStructure):
             ])
         return graph
 
-
     def get_sets(self):
         MIS = [['B'], ['D'], ['E'], ['B', 'D'], ['B', 'E'], ['D', 'E']]
         POMIS = [['B'], ['D'], ['E'], ['B', 'D'], ['D', 'E']]
         manipulative_variables = ['B', 'D', 'E']
         return MIS, POMIS, manipulative_variables
 
-
     def get_set_BO(self):
         manipulative_variables = ['B', 'D', 'E']
         return manipulative_variables
-
 
     def get_interventional_ranges(self):
         min_intervention_e = -6
@@ -106,7 +104,6 @@ class CompleteGraph(graph.GraphStructure):
         ])
         return dict_ranges
 
-
     def fit_all_gaussian_processes(self):
         functions = {}
         inputs_list = [self.B, self.F, np.hstack((self.D,self.C)), np.hstack((self.B,self.C)), np.hstack((self.A,self.C,self.E)), np.hstack((self.B,self.C,self.D)), 
@@ -125,7 +122,6 @@ class CompleteGraph(graph.GraphStructure):
 
         return functions
 
-
     def fit_all_gaussian_processes(self, observational_samples):
         A = np.asarray(observational_samples['A'])[:,np.newaxis]
         B = np.asarray(observational_samples['B'])[:,np.newaxis]
@@ -135,14 +131,12 @@ class CompleteGraph(graph.GraphStructure):
         F = np.asarray(observational_samples['F'])[:,np.newaxis]
         Y = np.asarray(observational_samples['Y'])[:,np.newaxis]
 
-
         functions = {}
         inputs_list = [B, np.hstack((A,C,E)), np.hstack((D,C)), np.hstack((B,C)), np.hstack((B,C,D)), 
                     np.hstack((D,E,C,A)),np.hstack((B,E,C,A))]
         output_list = [C, Y, Y, Y, Y, Y, Y, Y]
         name_list = ['gp_C', 'gp_A_C_E', 'gp_D_C', 'gp_B_C', 'gp_B_C_D', 'gp_D_E_C_A', 'gp_B_E_C_A']
         parameter_list = [[1.,1.,10., False], [1.,1.,10., False], [1.,1.,1., False], [1.,1.,10., False], [1.,1.,10., False], [1.,1.,10., False], [1.,1.,10., False]]
-
 
         ## Fit all conditional models
         for i in range(len(inputs_list)):
@@ -156,18 +150,8 @@ class CompleteGraph(graph.GraphStructure):
         costs = define_costs(type_cost)
         return costs
 
-
-    def get_all_do(self):
-        do_dict = {}
-        do_dict['compute_do_BDEF'] = compute_do_BDEF
-        do_dict['compute_do_BDE'] = compute_do_BDE
-        do_dict['compute_do_BD'] = compute_do_BD
-        do_dict['compute_do_BE'] = compute_do_BE
-        do_dict['compute_do_DE'] = compute_do_DE
-        do_dict['compute_do_B'] = compute_do_B
-        do_dict['compute_do_D'] = compute_do_D
-        do_dict['compute_do_E'] = compute_do_E
-        return do_dict
+    def get_do_function(self, function_name):
+        return self.do_functions[function_name]
 
 
 

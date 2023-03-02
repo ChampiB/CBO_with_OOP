@@ -10,15 +10,13 @@ class GraphStructure:
 
     @abc.abstractmethod
     def fit_all_gaussian_processes(self):
-
         raise NotImplementedError("Subclass should implement this.")
 
     @abc.abstractmethod
     def fit_all_gaussian_processes(self, observational_samples):
         raise NotImplementedError("Subclass should implement this.")
 
-
     @abc.abstractmethod
-    def get_all_do(self):
+    def get_do_function(self, function_name):
         raise NotImplementedError("Subclass should implement this.")
 

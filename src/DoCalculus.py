@@ -1,57 +1,51 @@
 import numpy as np
+from functools import partial
 
 
 class DoCalculus:
 
-    def __int__(self):
-        pass
+    def __init__(self, cbo):
+        self.cbo = cbo
+
+    def update_all_do_functions(self, gaussian_processes):
+        """
+        Compute the new mean and variance functions
+        :param gaussian_processes: the previous functions
+        :return: the new mean and variance functions
+        """
+        return [self.update_functions(index, gaussian_processes) for index in [0, 1]]
 
     @staticmethod
     def get_function_name(interventions):
+        """
+        Getter
+        :param interventions: the interventions for which the do-function's name is returned
+        :return: the do-function's name
+        """
         return 'compute_do_' + "".join(interventions)
 
-    @staticmethod
-    def update_mean_fun(graph, functions, variables, observational_samples, xi_dict_mean):
-        do_functions = graph.get_all_do()
-        function_name = DoCalculus.get_function_name(variables)
+    def update_functions(self, index, gaussian_processes):
+        return [
+            self.update_function(DoCalculus.function_do, gaussian_processes, self.cbo.interventions[j], index)
+            for j in range(self.cbo.es_size)
+        ]
 
-        def mean_function_do(x):
-            # Get the number of interventions
-            n_interventions = x.shape[0]
+    def update_function(self, function, gaussian_processes, interventions, index):
+        function_name = DoCalculus.get_function_name(interventions)
+        compute_do = self.cbo.graph.get_do_function(function_name)
+        return partial(function, self.cbo.x_mean[interventions], compute_do, gaussian_processes, index=index)
 
-            # Compute mean do?
-            xi_mean = xi_dict_mean[variables]
-            mean_do = np.zeros((n_interventions, 1))
-            for i in range(n_interventions):
-                xi_str = str(x[i])
-                if xi_str in xi_mean:
-                    mean_do[i] = xi_mean[xi_str]
-                else:
-                    mean_do[i] = do_functions[function_name](observational_samples, functions, value=x[i])[0]
-                    xi_mean[xi_str] = mean_do[i]
-            return np.float64(mean_do)
+    def function_do(self, gp, compute_do, functions, xs, index):
+        # Create an array of variances
+        var_do = np.zeros((xs.shape[0], 1))
+        for i, x in enumerate(xs):
 
-        return mean_function_do
+            # Compute the variance of the i-th intervention
+            name = str(x)
+            var_do[i] = gp[name] if name in gp.keys() else compute_do(self.cbo.measurements, functions, value=x)[index]
 
-    @staticmethod
-    def update_var_fun(graph, functions, variables, observational_samples, xi_dict_var):
+            # Store the mean in the directory of variances
+            if name not in gp.keys():
+                gp[name] = var_do[i]
 
-        function_name = DoCalculus.get_function_name(variables)
-        do_function = graph.get_all_do()[function_name]
-
-        def var_function_do(x):
-            num_interventions = x.shape[0]
-            xi_var = xi_dict_var[variables]
-
-            var_do = np.zeros((num_interventions, 1))
-            for i in range(num_interventions):
-                xi = str(x[i])
-                if xi in xi_var:
-                    var_do[i] = xi_var[xi]
-                else:
-                    var_do[i] = do_function(observational_samples, functions, value=x[i])[1]
-                    xi_var[xi] = var_do[i]
-
-            return np.float64(var_do)
-
-        return var_function_do
+        return np.float64(var_do)

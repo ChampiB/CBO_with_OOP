@@ -2,7 +2,7 @@ from collections import OrderedDict
 from scipy.stats import gamma
 from sklearn.linear_model import LinearRegression
 from sklearn.mixture import GaussianMixture
-from . import graph
+from graph import GraphStructure
 from src.utils_functions import fit_gaussian_process
 from .CoralGraph_DoFunctions import *
 from .CoralGraph_CostFunctions import define_costs
@@ -10,7 +10,7 @@ import sys
 sys.path.append("../..")
 
 
-class CoralGraph(graph.GraphStructure):
+class CoralGraph(GraphStructure):
     """
     An instance of the class graph giving the graph structure in the Coral reef example
 
@@ -94,6 +94,18 @@ class CoralGraph(graph.GraphStructure):
 
         self.dist_nutrients_pc1 = GaussianMixture(n_components=3)
         self.dist_nutrients_pc1.fit(self.true_measurements['N'])
+
+        self.do_functions = {
+            'compute_do_N': compute_do_N, 'compute_do_O': compute_do_O, 'compute_do_C': compute_do_C,
+            'compute_do_T': compute_do_T, 'compute_do_D': compute_do_D, 'compute_do_NO': compute_do_NO,
+            'compute_do_NC': compute_do_NC, 'compute_do_NT': compute_do_NT, 'compute_do_ND': compute_do_ND,
+            'compute_do_OC': compute_do_OC, 'compute_do_OT': compute_do_OT, 'compute_do_OD': compute_do_OD,
+            'compute_do_TC': compute_do_TC, 'compute_do_TD': compute_do_TD, 'compute_do_CD': compute_do_CD,
+            'compute_do_NOC': compute_do_NOC, 'compute_do_NOT': compute_do_NOT, 'compute_do_NOD': compute_do_NOD,
+            'compute_do_NCT': compute_do_NCT, 'compute_do_NCD': compute_do_NCD, 'compute_do_NTD': compute_do_NTD,
+            'compute_do_OCT': compute_do_OCT, 'compute_do_OCD': compute_do_OCD, 'compute_do_CTD': compute_do_CTD,
+            'compute_do_OTD': compute_do_OTD
+        }
 
     def define_sem(self):
 
@@ -216,15 +228,5 @@ class CoralGraph(graph.GraphStructure):
     def get_cost_structure(type_cost):
         return define_costs(type_cost)
 
-    def get_all_do(self):
-        return {
-            'compute_do_N': compute_do_N, 'compute_do_O': compute_do_O, 'compute_do_C': compute_do_C,
-            'compute_do_T': compute_do_T, 'compute_do_D': compute_do_D, 'compute_do_NO': compute_do_NO,
-            'compute_do_NC': compute_do_NC, 'compute_do_NT': compute_do_NT, 'compute_do_ND': compute_do_ND,
-            'compute_do_OC': compute_do_OC, 'compute_do_OT': compute_do_OT, 'compute_do_OD': compute_do_OD,
-            'compute_do_TC': compute_do_TC, 'compute_do_TD': compute_do_TD, 'compute_do_CD': compute_do_CD,
-            'compute_do_NOC': compute_do_NOC, 'compute_do_NOT': compute_do_NOT, 'compute_do_NOD': compute_do_NOD,
-            'compute_do_NCT': compute_do_NCT, 'compute_do_NCD': compute_do_NCD, 'compute_do_NTD': compute_do_NTD,
-            'compute_do_OCT': compute_do_OCT, 'compute_do_OCD': compute_do_OCD, 'compute_do_CTD': compute_do_CTD,
-            'compute_do_OTD': compute_do_OTD
-        }
+    def get_do_function(self, function_name):
+        return self.do_functions[function_name]

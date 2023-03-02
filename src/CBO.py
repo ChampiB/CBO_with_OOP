@@ -63,6 +63,9 @@ class CBO:
 		# Create the monitor that will keep track of the CBO performance.
 		self.monitor = Monitor(self, verbose=verbose)
 
+		# Create the do-calculus engine.
+		self.do_calculus = DoCalculus()
+
 		# Store verbose mode.
 		self.verbose = verbose
 
@@ -131,7 +134,7 @@ class CBO:
 		functions = self.graph.fit_all_gaussian_processes(self.measurements)
 
 		# Update the mean and variance functions to account for the new observational data.
-		self.mean_functions, self.var_functions = self.update_all_do_functions(functions)
+		self.mean_functions, self.var_functions = self.do_calculus.update_all_do_functions(functions)
 
 		# Log the cost and optimal reward (i.e., as the agent is observing, it remains the same previous trial).
 		self.monitor.log_agent_performance()
@@ -209,24 +212,6 @@ class CBO:
 			complete_dataset=self.all_measurements,
 			initial_num_obs_samples=self.initial_num_obs_samples
 		)
-
-	def update_all_do_functions(self, functions):
-		"""
-		Compute the new mean and variance functions
-		:param functions: the previous functions
-		:return: the new mean and variance functions
-		"""
-
-		# Create the lists of mean and variance functions.
-		mean_functions = [
-			DoCalculus.update_mean_fun(self.graph, functions, self.interventions[j], self.measurements, self.x_mean)
-			for j in range(self.es_size)
-		]
-		var_functions = [
-			DoCalculus.update_var_fun(self.graph, functions, self.interventions[j], self.measurements, self.x_var)
-			for j in range(self.es_size)
-		]
-		return mean_functions, var_functions
 
 	def update_all_gaussian_processes(self):
 		"""

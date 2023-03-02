@@ -1,4 +1,4 @@
-from . import graph
+from graph import GraphStructure
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
 from .ToyGraph_DoFunctions import *
@@ -7,7 +7,7 @@ import sys
 sys.path.append("../..")
 
 
-class ToyGraph(graph.GraphStructure):
+class ToyGraph(GraphStructure):
     """
     An instance of the class graph giving the graph structure in the toy example 
     
@@ -20,6 +20,7 @@ class ToyGraph(graph.GraphStructure):
         self.X = np.asarray(observational_samples['X'])[:,np.newaxis]
         self.Y = np.asarray(observational_samples['Y'])[:,np.newaxis]
         self.Z = np.asarray(observational_samples['Z'])[:,np.newaxis]
+        self.do_functions = {'compute_do_X': compute_do_X, 'compute_do_Z': compute_do_Z, 'compute_do_XZ': compute_do_XZ}
 
     def define_sem(self):
 
@@ -106,12 +107,5 @@ class ToyGraph(graph.GraphStructure):
         costs = define_costs(type_cost)
         return costs
 
-    def get_all_do(self):
-        do_dict = {}
-        do_dict['compute_do_X'] = compute_do_X
-        do_dict['compute_do_Z'] = compute_do_Z
-        do_dict['compute_do_XZ'] = compute_do_XZ
-        return do_dict
-
-
-
+    def get_do_function(self, function_name):
+        return self.do_functions[function_name]
