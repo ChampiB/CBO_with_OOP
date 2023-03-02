@@ -1,11 +1,9 @@
+import numpy as np
 import sys
 sys.path.append("../..")
 
-## Import basic packages
-import numpy as np
 
-
-################################ One variable Do function
+# One variable Do function
 def compute_do_N(observational_samples, functions, value):
     gp_N = functions['gp_N']
 
