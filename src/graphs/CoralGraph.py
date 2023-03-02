@@ -228,5 +228,6 @@ class CoralGraph(GraphStructure):
     def get_cost_structure(type_cost):
         return define_costs(type_cost)
 
-    def get_do_function(self, function_name):
-        return self.do_functions[function_name]
+    def get_do_function(self, intervention):
+        name = self.get_function_name(intervention)
+        return self.do_functions[name]
