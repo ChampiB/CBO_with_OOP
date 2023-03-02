@@ -9,6 +9,7 @@ def find_current_global(current_y, dict_interventions, task):
     # This function finds the optimal value and variable at every iteration
     dict_values = {}
     for j in range(len(dict_interventions)):
+        print(dict_interventions[j])
         dict_values[dict_interventions[j]] = []
 
     for variable, value in current_y.items():

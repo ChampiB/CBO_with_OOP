@@ -128,7 +128,7 @@ class Monitor:
         self.current_best_y[var_to_intervene].append(target_ys[0][0])
 
         # Find the new current best solution.
-        current_best = find_current_global(self.current_best_y, self.cbo.interventions, self.cbo.task)
+        current_best = find_current_global(self.current_best_y, self.cbo.intervention_names, self.cbo.task)
 
         # Otherwise, the cost and optimal reward are provided as parameters.
         self.global_opt.append(current_best)

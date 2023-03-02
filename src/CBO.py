@@ -264,7 +264,7 @@ class CBO:
 		Find the current best solution found by CBO
 		:return: the current best solution
 		"""
-		return find_current_global(self.monitor.current_best_y, self.interventions, self.task)
+		return find_current_global(self.monitor.current_best_y, self.intervention_names, self.task)
 
 	def select_next_intervention(self, acquisition_ys):
 		"""
@@ -284,6 +284,13 @@ class CBO:
 		:param acquisition_xs: the values of x that maximise the acquisition function
 		:return: the intervention's cost
 		"""
+		for i, intervention in enumerate(self.interventions[intervention]):
+			print("1) ", i)
+			print("2) ", intervention)
+			print("3) ", acquisition_xs)
+			print("4) ", acquisition_xs[intervention])
+			print("5) ", acquisition_xs[intervention][0, i])
+
 		x = {
 			intervention: acquisition_xs[intervention][0, i]
 			for i, intervention in enumerate(self.interventions[intervention])
