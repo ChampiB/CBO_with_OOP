@@ -7,7 +7,6 @@ if __name__ == '__main__':
     """
     Script running the causal Bayesian optimisation algorithm.
     """
-
     # Parse and display the argument of the script.
     args = ArgumentParser().parse(verbose=True)
 

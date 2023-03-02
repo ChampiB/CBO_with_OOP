@@ -2,7 +2,7 @@ from collections import OrderedDict
 import scipy
 from sklearn.linear_model import LinearRegression
 import sklearn.mixture
-from graph import GraphStructure
+from src.graphs import GraphStructure
 from src.utils_functions import fit_gaussian_process
 from .SimplifiedCoralGraph_DoFunctions import *
 from .SimplifiedCoralGraph_CostFunctions import define_costs
@@ -143,7 +143,8 @@ class SimplifiedCoralGraph(GraphStructure):
 
         return graph
 
-    def get_sets(self):
+    @staticmethod
+    def get_exploration_set(set_name):
         MIS_1 = [['N'], ['O'], ['C'], ['T'], ['D']]
         MIS_2 = [['N', 'O'], ['N', 'C'], ['N', 'T'], ['N', 'D'], ['O', 'C'], ['O', 'T'], ['O', 'D'], ['T', 'C'], ['T', 'D'], ['C', 'D']]
         MIS_3 = [['N', 'O', 'C'], ['N', 'O', 'T'], ['N', 'O', 'D'], ['N', 'C', 'T'], ['N', 'C', 'D'], ['N','T', 'D'], 
@@ -156,12 +157,11 @@ class SimplifiedCoralGraph(GraphStructure):
         ## To change
         POMIS = MIS
 
-        manipulative_variables = ['N', 'O', 'C', 'T', 'D']
-        return MIS, POMIS, manipulative_variables
+        return MIS if set_name == "MIS" else POMIS
 
-    def get_set_BO(self):
-        manipulative_variables = ['N', 'O', 'C', 'T', 'D']
-        return manipulative_variables
+    @staticmethod
+    def get_manipulative_variables():
+        return ['N', 'O', 'C', 'T', 'D']
 
     def get_interventional_ranges(self):
         min_intervention_N = -2 

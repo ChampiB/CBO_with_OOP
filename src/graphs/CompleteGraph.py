@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from graph import GraphStructure
+from src.graphs import GraphStructure
 from src.utils_functions import fit_gaussian_process
 from .CompleteGraph_DoFunctions import *
 from .CompleteGraph_CostFunctions import define_costs
@@ -60,7 +60,7 @@ class CompleteGraph(GraphStructure):
         def fY(epsilon, D, E, U1, U2, **kwargs):
           return np.cos(D) - D/5. + np.sin(E) - E/4. + U1 + np.exp(-U2) + epsilon[7]
 
-        graph = OrderedDict ([
+        graph = OrderedDict([
               ('U1', fU1),
               ('U2', fU2),
               ('F', fF),
@@ -73,15 +73,15 @@ class CompleteGraph(GraphStructure):
             ])
         return graph
 
-    def get_sets(self):
+    @staticmethod
+    def get_exploration_set(set_name):
         MIS = [['B'], ['D'], ['E'], ['B', 'D'], ['B', 'E'], ['D', 'E']]
         POMIS = [['B'], ['D'], ['E'], ['B', 'D'], ['D', 'E']]
-        manipulative_variables = ['B', 'D', 'E']
-        return MIS, POMIS, manipulative_variables
+        return MIS if set_name == "MIS" else POMIS
 
-    def get_set_BO(self):
-        manipulative_variables = ['B', 'D', 'E']
-        return manipulative_variables
+    @staticmethod
+    def get_manipulative_variables():
+        return ['B', 'D', 'E']
 
     def get_interventional_ranges(self):
         min_intervention_e = -6
@@ -149,7 +149,3 @@ class CompleteGraph(GraphStructure):
     def get_cost_structure(self, type_cost):
         costs = define_costs(type_cost)
         return costs
-
-    def get_do_function(self, intervention):
-        name = self.get_function_name(intervention)
-        return self.do_functions[name]

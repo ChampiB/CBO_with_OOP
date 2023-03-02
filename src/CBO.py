@@ -21,23 +21,24 @@ class CBO:
 		:param verbose: whether to display debug information
 		"""
 
-		# Store useful arguments.
-		self.max_n = args.initial_num_obs_samples + 50
-		self.initial_num_obs_samples = args.initial_num_obs_samples
-		self.gp_type = GPType.CAUSAL_GP if args.gp_type else GPType.NON_CAUSAL_GP
-		self.num_trials = args.num_trials
-		self.exploration_set = eval(args.exploration_set)
-		self.es_size = len(self.exploration_set)
-		self.task = args.task
-		self.num_additional_observations = args.num_additional_observations
-		self.type_cost = args.type_cost
-		self.name_index = args.name_index
-
 		# Store the loaded data.
 		self.graph = data.graph
 		self.measurements = data.measurements
 		self.all_measurements = data.all_measurements
 		self.interventions = data.interventions
+
+		# Store useful arguments.
+		self.exploration_set = data.graph.get_exploration_set(args.exploration_set)
+		self.es_size = len(self.exploration_set)
+		self.num_interventions = args.num_interventions
+		self.max_n = args.initial_num_obs_samples + 50
+		self.initial_num_obs_samples = args.initial_num_obs_samples
+		self.gp_type = GPType.CAUSAL_GP if args.causal_prior else GPType.NON_CAUSAL_GP
+		self.num_trials = args.num_trials
+		self.task = args.task
+		self.num_additional_observations = args.num_additional_observations
+		self.type_cost = args.type_cost
+		self.name_index = args.name_index
 
 		# List that will contain the mean and variance functions of the Gaussian processes.
 		self.mean_functions = []
@@ -54,11 +55,11 @@ class CBO:
 		Path(self.saving_dir).mkdir(parents=True, exist_ok=True)
 
 		# Get the interventions' name for each intervention in the exploration_set
-		self.interventions = ["".join(variables) for variables in self.exploration_set]
+		self.intervention_names = ["".join(variables) for variables in self.exploration_set]
 
 		# For each Gaussian process, initialise the mean and variance of x
-		self.x_mean = {i: {} for i in self.interventions}
-		self.x_var = {i: {} for i in self.interventions}
+		self.x_mean = {i: {} for i in self.intervention_names}
+		self.x_var = {i: {} for i in self.intervention_names}
 
 		# Create the monitor that will keep track of the CBO performance.
 		self.monitor = Monitor(self, verbose=verbose)
@@ -179,20 +180,12 @@ class CBO:
 		"""
 
 		# Compute the observation coverage.
-		coverage_total = compute_coverage(self.measurements, self.manipulative_variables, self.interventional_ranges)[2]
+		coverage_total = compute_coverage(self.measurements, self.graph.manipulative_variables(), self.interventional_ranges)[2]
 
 		# Compute epsilon.
-		coverage_obs = update_hull(self.measurements, self.manipulative_variables)
+		coverage_obs = update_hull(self.measurements, self.graph.manipulative_variables())
 		rescale = self.measurements.shape[0] / self.max_n
 		return (coverage_obs / coverage_total) / rescale
-
-	@property
-	def manipulative_variables(self):
-		"""
-		Getter
-		:return: the manipulative variables
-		"""
-		return self.graph.get_sets()[2]
 
 	@property
 	def interventional_ranges(self):

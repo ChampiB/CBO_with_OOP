@@ -1,9 +1,8 @@
 import sys
-sys.path.append("../..")
-
-## Import basic packages
 import numpy as np
 from collections import OrderedDict
+sys.path.append("../..")
+
 
 def Causal_effect_DO(*interventions, functions, 
                      parents_Y, 
@@ -15,8 +14,6 @@ def Causal_effect_DO(*interventions, functions,
 
     final_variables = OrderedDict()
     
-    num_models = len(functions)
-    num_interventions = len(children)
     num_observations = list(parents_Y.items())[0][1].shape[0]
 
     ## We should aggregate the tuple here
@@ -91,7 +88,6 @@ def compute_do_X(observational_samples, functions, value):
       ('Z', functions['Z']),
       ('X', [])
         ])
-
 
     children = OrderedDict([('X', OrderedDict ([('Z', Z)]) )])
     independent_nodes = OrderedDict([('X', OrderedDict ([]) )])

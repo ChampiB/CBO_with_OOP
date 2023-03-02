@@ -1,10 +1,11 @@
+import copy
 from collections import OrderedDict
 from scipy.stats import gamma
+import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.mixture import GaussianMixture
-from graph import GraphStructure
+from src.graphs import GraphStructure
 from src.utils_functions import fit_gaussian_process
-from .CoralGraph_DoFunctions import *
 from .CoralGraph_CostFunctions import define_costs
 import sys
 sys.path.append("../..")
@@ -84,8 +85,8 @@ class CoralGraph(GraphStructure):
 
         # Creating linear regression models and fit them on the available data.
         self.regressions = {}
-        for var_name in self.var_names:
-            inputs = np.hstack([self.true_measurements[dependency] for dependency in self.var_dependencies[var_name]])
+        for var_name, dependencies in self.var_dependencies.items():
+            inputs = np.hstack([self.true_measurements[dependency] for dependency in dependencies])
             self.regressions[var_name] = LinearRegression().fit(inputs, self.true_measurements[var_name])
 
         # Define distributions for the exogenous variables
@@ -94,18 +95,6 @@ class CoralGraph(GraphStructure):
 
         self.dist_nutrients_pc1 = GaussianMixture(n_components=3)
         self.dist_nutrients_pc1.fit(self.true_measurements['N'])
-
-        self.do_functions = {
-            'compute_do_N': compute_do_N, 'compute_do_O': compute_do_O, 'compute_do_C': compute_do_C,
-            'compute_do_T': compute_do_T, 'compute_do_D': compute_do_D, 'compute_do_NO': compute_do_NO,
-            'compute_do_NC': compute_do_NC, 'compute_do_NT': compute_do_NT, 'compute_do_ND': compute_do_ND,
-            'compute_do_OC': compute_do_OC, 'compute_do_OT': compute_do_OT, 'compute_do_OD': compute_do_OD,
-            'compute_do_TC': compute_do_TC, 'compute_do_TD': compute_do_TD, 'compute_do_CD': compute_do_CD,
-            'compute_do_NOC': compute_do_NOC, 'compute_do_NOT': compute_do_NOT, 'compute_do_NOD': compute_do_NOD,
-            'compute_do_NCT': compute_do_NCT, 'compute_do_NCD': compute_do_NCD, 'compute_do_NTD': compute_do_NTD,
-            'compute_do_OCT': compute_do_OCT, 'compute_do_OCD': compute_do_OCD, 'compute_do_CTD': compute_do_CTD,
-            'compute_do_OTD': compute_do_OTD
-        }
 
     def define_sem(self):
 
@@ -166,7 +155,7 @@ class CoralGraph(GraphStructure):
         ])
 
     @staticmethod
-    def get_sets():
+    def get_exploration_set(set_name):
         MIS_1 = [['N'], ['O'], ['C'], ['T'], ['D']]
         MIS_2 = [['N', 'O'], ['N', 'C'], ['N', 'T'], ['N', 'D'], ['O', 'C'], ['O', 'T'], ['O', 'D'], ['T', 'C'], ['T', 'D'], ['C', 'D']]
         MIS_3 = [['N', 'O', 'C'], ['N', 'O', 'T'], ['N', 'O', 'D'], ['N', 'C', 'T'], ['N', 'C', 'D'], ['N', 'T', 'D'], ['O', 'C', 'T'], ['O', 'C', 'D'], ['C', 'T', 'D'], ['O', 'T', 'D']]
@@ -178,8 +167,7 @@ class CoralGraph(GraphStructure):
         # To change
         POMIS = MIS
 
-        manipulative_variables = ['N', 'O', 'C', 'T', 'D']
-        return MIS, POMIS, manipulative_variables
+        return MIS if set_name == "MIS" else POMIS
 
     @staticmethod
     def get_manipulative_variables():
@@ -197,14 +185,13 @@ class CoralGraph(GraphStructure):
 
     def fit_all_gaussian_processes(self, measurements=None):
         # If no measurements provided as input, use the measurements in self
-        if measurements is None:
-            measurements = self.measurements
+        measurements = self.measurements if measurements is None else {
+            var_name: np.asarray(measurements[var_name])[:, np.newaxis]
+            for var_name, measurement in measurements.items()
+        }
 
         # Retrieve the measurements associated to each variable in the graph
-        var_measurements = {
-            var_name: np.asarray(measurements[var_name])[:, np.newaxis]
-            for var_name in self.var_names
-        }
+        var_measurements = copy.deepcopy(measurements)
 
         # For each variable in the graph, concatenate the measurements of all the variables it depends on
         xs = [
@@ -213,7 +200,7 @@ class CoralGraph(GraphStructure):
         ]
 
         # For each variable in the graph, retrieve the measurements of the target variable Y
-        outputs = [self.measurements["Y"]] * len(self.fit_dependencies)
+        outputs = [measurements["Y"]] * len(xs)
 
         # Create the name of the Gaussian process corresponding to each variable in the graph
         names = ["gp_" + "_".join(dependencies) for dependencies in self.fit_dependencies]
@@ -227,7 +214,3 @@ class CoralGraph(GraphStructure):
     @staticmethod
     def get_cost_structure(type_cost):
         return define_costs(type_cost)
-
-    def get_do_function(self, intervention):
-        name = self.get_function_name(intervention)
-        return self.do_functions[name]

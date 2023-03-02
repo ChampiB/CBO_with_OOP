@@ -1,6 +1,5 @@
 import time
 from functools import partial
-
 from src.utils_functions import *
 import copy
 
@@ -25,13 +24,13 @@ class Monitor:
         # interventional data with seed given by name_index
         self.data_x, self.data_y, best_intervention_value, opt_y, best_variable = \
             define_initial_data_cbo(
-                cbo.interventions, cbo.num_interventions, eval(cbo.exploration_set), cbo.name_index, cbo.task
+                cbo.interventions, cbo.num_interventions, cbo.exploration_set, cbo.name_index, cbo.task
             )
         self.current_cost = [0.]
         self.global_opt = [opt_y]
 
         # For each Gaussian process, initialise the x-position that leads to the best acquisition value
-        self.current_best_x = {i: [np.inf if cbo.task == 'min' else -np.inf] for i in self.cbo.interventions}
+        self.current_best_x = {i: [np.inf if cbo.task == 'min' else -np.inf] for i in self.cbo.intervention_names}
         self.current_best_y = copy.deepcopy(self.current_best_x)
         self.current_best_y[best_variable].append(opt_y)
         self.current_best_x[best_variable].append(best_intervention_value)
@@ -53,6 +52,7 @@ class Monitor:
             max_ranges = [ranges[intervention][1] for intervention in cbo.exploration_set[s]]
             # TODO: update this with new functions
             interventions = {intervention: '' for intervention in cbo.exploration_set[s]}
+            print(interventions)
             space = get_parameter_space(interventions, min_ranges, max_ranges)
             target_function = partial(compute_interventions, cbo.graph.define_sem(), interventions, target_variable='Y')
             self.target_function_list.append(target_function)

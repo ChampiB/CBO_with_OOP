@@ -24,6 +24,8 @@ class DataLoader:
 
         # Get true interventional data
         self.interventions = np.load(f'./data/{experiment}/interventional_data.npy', allow_pickle=True)
+        print(experiment)
+        print(self.interventions.shape)
 
         # The list a supported graphs
         graph_classes = {

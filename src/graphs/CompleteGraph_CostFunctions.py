@@ -1,11 +1,10 @@
+import numpy as np
+from collections import OrderedDict
 import sys
 sys.path.append("../..")
 
-## Import basic packages
-import numpy as np
-from collections import OrderedDict
 
-## Define a cost variable for each intervention
+# Define a cost variable for each intervention
 def cost_A_fix_equal(intervention_value, **kwargs):
     fix_cost = 1.
     return fix_cost
@@ -30,8 +29,7 @@ def cost_F_fix_equal(intervention_value, **kwargs):
     fix_cost = 1.
     return fix_cost
 
-
-## Define a cost variable for each intervention
+# Define a cost variable for each intervention
 def cost_A_fix_different(intervention_value, **kwargs):
     fix_cost = 1.
     return fix_cost
@@ -55,8 +53,6 @@ def cost_E_fix_different(intervention_value, **kwargs):
 def cost_F_fix_different(intervention_value, **kwargs):
     fix_cost = 3.
     return fix_cost
-
-
 
 ## Define a cost variable for each intervention
 def cost_A_fix_different_variable(intervention_value, **kwargs):
@@ -82,7 +78,6 @@ def cost_E_fix_different_variable(intervention_value, **kwargs):
 def cost_F_fix_different_variable(intervention_value, **kwargs):
     fix_cost = 3.
     return np.sum(np.abs(intervention_value)) + fix_cost
-
 
 
 ## Define a cost variable for each intervention

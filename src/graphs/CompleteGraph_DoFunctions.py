@@ -1,9 +1,6 @@
+import numpy as np
 import sys
 sys.path.append("../..")
-
-## Import basic packages
-import numpy as np
-
 
 
 def compute_do_E(observational_samples, functions, value):
@@ -159,4 +156,3 @@ def compute_do_BDEF(observational_samples, functions, value):
     var_do = np.mean(gp_A_B_C_D_E_F.predict(intervened_inputs2)[1])
 
     return mean_do, var_do
-

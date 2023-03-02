@@ -31,32 +31,59 @@ class DoCalculus:
             for i in range(self.cbo.es_size)
         ]
 
-    def update_do_function(self, gaussian_processes, intervention, index, xs):
+    def update_do_function(self, gaussian_processes, intervention, index, values):
         """
         Compute the mean and variance functions of an intervention
         :param index: if index == 0, then compute mean function, else compute variance function
         :param intervention: the intervention whose functions need to be computed
         :param gaussian_processes: the previous functions
-        :param xs: the inputs
+        :param values: the inputs
         :return: the new mean and variance functions
         """
-        #
-        compute_do = self.cbo.graph.get_do_function(intervention)
+
+        # Get the do function and the mean or variance functions  # TODO right?
         functions = self.cbo.x_mean[intervention] if index == 0 else self.cbo.x_var[intervention]
+        name = self.cbo.graph.get_gp_name(intervention)
+        gp = gaussian_processes[name]
 
         # Create an array of variances
-        do_function = np.zeros((xs.shape[0], 1))
-        for i, x in enumerate(xs):
+        do_function = np.zeros((values.shape[0], 1))
+        for i, value in enumerate(values):
 
             # Compute the variance of the i-th intervention
-            name = str(x)
-            if name in functions.keys():
-                do_function[i] = functions[name]
+            value_name = str(value)
+            if value_name in functions.keys():
+                do_function[i] = functions[value_name]
             else:
-                do_function[i] = compute_do(self.cbo.measurements, gaussian_processes, value=x)[index]
+                input_var = next(filter(lambda dep: dep[0] == intervention[0], self.cbo.graph.fit_dependencies))
+                do_function[i] = self.compute_do(self.cbo.measurements, gp, value, input_var, intervention)[index]
+                do_function[i] = np.mean(do_function[i])
 
             # Store the mean in the directory of variances
-            if name not in functions.keys():
-                functions[name] = do_function[i]
+            if value_name not in functions.keys():
+                functions[value_name] = do_function[i]
 
         return np.float64(do_function)
+
+    def compute_do(self, measurements, gp, value, input_vars, intervention_vars):
+        """
+        input_vars: the all the input variables
+        intervention_vars: the variables on which we intervene
+        """
+
+        intervened_inputs = np.hstack([
+            self.get_intervened_inputs(measurements, input_var, intervention_vars, value) for input_var in input_vars
+        ])
+        return gp.predict(intervened_inputs)
+
+    @staticmethod
+    def get_intervened_inputs(measurements, input_var, intervention_vars, value):
+        """
+        Getter
+        :returns: the intervened inputs
+        """
+        intervened_inputs = np.asarray(measurements[input_var])[:, np.newaxis]
+        if input_var in intervention_vars:
+            index = intervention_vars.index(input_var)
+            intervened_inputs = np.ones_like(intervened_inputs) * value[index]
+        return intervened_inputs

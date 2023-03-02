@@ -7,7 +7,6 @@ from emukit.core import ParameterSpace, ContinuousParameter
 
 def sample_from_model(model, epsilon=None):
     """ Produces a single sample from a structural equation model (SEM).
-
     :type model: dict
     :param model: the SEM used for sampling
     :type epsilon: list or None, optional
@@ -29,7 +28,6 @@ def sample_from_model(model, epsilon=None):
 
 def intervene_dict(model, **interventions):
     """Create a new SEM with fixed values for the variables of the base model that are intervened on.
-
     :type model: dict
     :param model: The SEM obtained with the define_sem method of any GraphStructure
     :type interventions: dict
@@ -49,7 +47,6 @@ def intervene_dict(model, **interventions):
 def compute_interventions(model, interventions, node_values, target_variable="Y", num_samples=100000, seed=1):
     """Generate a new SEM where all the specified nodes are intervened on, and compute
     num_samples from this new SEM. Return the averaged values obtained on the target variable.
-
     :type model: dict
     :param model: The original SEM
     :type node_values:
@@ -77,20 +74,17 @@ def compute_interventions(model, interventions, node_values, target_variable="Y"
     return np.asarray(np.mean(samples[target_variable]))[np.newaxis, np.newaxis]
 
 
-def get_parameter_space(interventions, min_intervention, max_intervention):
+def get_parameter_space(interventions, min_interventions, max_interventions):
     """ Instantiate the ParameterSpace of the interventions
-
     :type interventions: dict
     :param interventions: The nodes on which to intervene in the format {node_name: ""}
-    :type min_intervention: list
-    :param min_intervention: The minimum value for each node
-    :type max_intervention: list
-    :param max_intervention: The maximum value for each node
+    :type min_interventions: list
+    :param min_interventions: The minimum value for each node
+    :type max_interventions: list
+    :param max_interventions: The maximum value for each node
     :rtype: ParameterSpace
     :return: The parameter space of the intervention
     """
-    assert len(min_intervention) == len(interventions) == len(max_intervention)
-
-    params = [ContinuousParameter(interventions[node], min_intervention[i], max_intervention[i])
-              for i, node in enumerate(interventions.keys())]
-    return ParameterSpace(params)
+    return ParameterSpace([
+        ContinuousParameter(*params) for params in zip(interventions.keys(), min_interventions, max_interventions)
+    ])

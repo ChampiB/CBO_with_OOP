@@ -28,3 +28,12 @@ class GraphStructure:
         :return: the do-function's name
         """
         return 'compute_do_' + "".join(interventions)
+
+    @staticmethod
+    def get_gp_name(interventions):
+        """
+        Getter
+        :param interventions: the interventions for which the Gaussian process' name is returned
+        :return: the Gaussian process' name
+        """
+        return 'gp_' + "_".join(interventions)

@@ -1,4 +1,4 @@
-from graph import GraphStructure
+from src.graphs import GraphStructure
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
 from .ToyGraph_DoFunctions import *
@@ -41,15 +41,15 @@ class ToyGraph(GraphStructure):
 
         return graph
 
-    def get_sets(self):
+    @staticmethod
+    def get_exploration_set(set_name):
         MIS = [['X'], ['Z']]
         POMIS = [['Z']]
-        manipulative_variables = ['X', 'Z']
-        return MIS, POMIS, manipulative_variables
+        return MIS if set_name == "MIS" else POMIS
 
-    def get_set_BO(self):
-        manipulative_variables = ['X', 'Z']
-        return manipulative_variables
+    @staticmethod
+    def get_manipulative_variables():
+        return ['X', 'Z']
 
     def get_interventional_ranges(self):
         return OrderedDict([
