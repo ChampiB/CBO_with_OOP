@@ -1,20 +1,20 @@
 from functools import partial
+import copy
 from collections import OrderedDict
-import scipy
+from scipy.stats import gamma
+import numpy as np
 from sklearn.linear_model import LinearRegression
-import sklearn.mixture
+from sklearn.mixture import GaussianMixture
 from src.graphs import GraphInterface
 from src.utils_functions import fit_gaussian_process
-import copy
-import numpy as np
 import sys
-sys.path.append("../..")
+sys.path.append("../../..")
 
 
-class SimplifiedCoralGraph(GraphInterface):
+class CoralGraph(GraphInterface):
     """
-    An instance of the class graph giving the graph structure in the Coral reef example 
-    
+    An instance of the class graph giving the graph structure in the Coral reef example
+
     Parameters
     ----------
     """
@@ -37,6 +37,20 @@ class SimplifiedCoralGraph(GraphInterface):
             var_name: np.asarray(true_measurements[var_name])[:, np.newaxis] for var_name in self.var_names
         }
 
+        # The dependencies between the variables
+        self.var_dependencies = {
+            "Y": ["L", "N", "P", "O", "C", "CO", "TE"],
+            "P": ["S", "T", "D", "TE"],
+            "O": ["S", "T", "D", "TE"],
+            "CO": ["S", "T", "D", "TE"],
+            "T": ["S"],
+            "D": ["S"],
+            "C": ["N", "L", "TE"],
+            "S": ["TE"],
+            "TE": ["L"],
+        }
+
+        # The dependencies between the variables when acting upon some of them
         self.fit_dependencies = [
             ["N"],
             ["O", "S", "T", "D", "TE"],
@@ -54,19 +68,6 @@ class SimplifiedCoralGraph(GraphInterface):
             ["N", "T", "D", "S"],
             ["C", "T", "D", "S", "N", "L", "TE"]
         ]
-
-        # The dependencies between the variables
-        self.var_dependencies = {
-            "Y": ["L", "N", "P", "O", "C", "CO", "TE"],
-            "P": ["S", "T", "D", "TE"],
-            "O": ["S", "T", "D", "TE"],
-            "CO": ["S", "T", "D", "TE"],
-            "T": ["S"],
-            "D": ["S"],
-            "C": ["N", "L", "TE"],
-            "S": ["TE"],
-            "TE": ["L"],
-        }
 
         self.fit_parameters = [
             [1., 1., 10., False],
@@ -93,85 +94,76 @@ class SimplifiedCoralGraph(GraphInterface):
             self.regressions[var_name] = LinearRegression().fit(inputs, self.true_measurements[var_name])
 
         # Define distributions for the exogenous variables
-        params_list = scipy.stats.gamma.fit(self.true_measurements["L"])
-        self.dist_Light = scipy.stats.gamma(a=params_list[0], loc=params_list[1], scale=params_list[2])
+        a, loc, scale = gamma.fit(self.true_measurements['L'])
+        self.dist_Light = gamma(a=a, loc=loc, scale=scale)
 
-        mixture = sklearn.mixture.GaussianMixture(n_components=3)
-        mixture.fit(self.true_measurements["N"])
-        self.dist_Nutrients_PC1 = mixture
+        self.dist_nutrients_pc1 = GaussianMixture(n_components=3)
+        self.dist_nutrients_pc1.fit(self.true_measurements['N'])
 
     def define_sem(self):
 
-        def fN(epsilon, **kwargs):
-            return self.dist_Nutrients_PC1.sample(1)[0][0][0]
+        def f_n(epsilon, **kwargs):
+            return self.dist_nutrients_pc1.sample(1)[0][0][0]
 
-        def fL(epsilon, **kwargs):
+        def f_l(epsilon, **kwargs):
             return self.dist_Light.rvs(1)[0]
 
-        def fTE(epsilon, L, **kwargs):
+        def f_te(epsilon, L, **kwargs):
             X = np.ones((1, 1)) * L
             return np.float64(self.regressions["TE"].predict(X))
 
-        def fC(epsilon, N, L, TE, **kwargs):
+        def f_c(epsilon, N, L, TE, **kwargs):
             X = np.ones((1, 1)) * np.hstack((N, L, TE))
             return np.float64(self.regressions["C"].predict(X))
 
-        def fS(epsilon, TE, **kwargs):
+        def f_s(epsilon, TE, **kwargs):
             X = np.ones((1, 1)) * TE
             return np.float64(self.regressions["S"].predict(X))
 
-        def fT(epsilon, S, **kwargs):
+        def f_t(epsilon, S, **kwargs):
             X = np.ones((1, 1)) * S
             return np.float64(self.regressions["T"].predict(X))
 
-        def fD(epsilon, S, **kwargs):
+        def f_d(epsilon, S, **kwargs):
             X = np.ones((1, 1)) * S
             return np.float64(self.regressions["D"].predict(X))
 
-        def fP(epsilon, S, T, D, TE, **kwargs):
+        def f_p(epsilon, S, T, D, TE, **kwargs):
             X = np.ones((1, 1)) * np.hstack((S, T, D, TE))
             return np.float64(self.regressions["P"].predict(X))
 
-        def fO(epsilon, S, T, D, TE, **kwargs):
+        def f_o(epsilon, S, T, D, TE, **kwargs):
             X = np.ones((1, 1)) * np.hstack((S, T, D, TE))
             return np.float64(self.regressions["O"].predict(X))
 
-        def fCO(epsilon, S, T, D, TE, **kwargs):
+        def f_co(epsilon, S, T, D, TE, **kwargs):
             X = np.ones((1, 1)) * np.hstack((S, T, D, TE))
             return np.float64(self.regressions["CO"].predict(X))
 
-        def fY(epsilon, L, N, P, O, C, CO, TE, **kwargs):
+        def f_y(epsilon, L, N, P, O, C, CO, TE, **kwargs):
             X = np.ones((1, 1)) * np.hstack((L, N, P, O, C, CO, TE))
             return np.float64(self.regressions["Y"].predict(X))
 
-        graph = OrderedDict([
-            ('N', fN),
-            ('L', fL),
-            ('TE', fTE),
-            ('C', fC),
-            ('S', fS),
-            ('T', fT),
-            ('D', fD),
-            ('P', fP),
-            ('O', fO),
-            ('CO', fCO),
-            ('Y', fY)
+        return OrderedDict([
+            ('N', f_n),
+            ('L', f_l),
+            ('TE', f_te),
+            ('C', f_c),
+            ('S', f_s),
+            ('T', f_t),
+            ('D', f_d),
+            ('P', f_p),
+            ('O', f_o),
+            ('CO', f_co),
+            ('Y', f_y)
         ])
-
-        return graph
 
     @staticmethod
     def get_exploration_set(set_name):
         MIS_1 = [['N'], ['O'], ['C'], ['T'], ['D']]
-        MIS_2 = [['N', 'O'], ['N', 'C'], ['N', 'T'], ['N', 'D'], ['O', 'C'], ['O', 'T'], ['O', 'D'], ['T', 'C'],
-                 ['T', 'D'], ['C', 'D']]
-        MIS_3 = [
-            ['N', 'O', 'C'], ['N', 'O', 'T'], ['N', 'O', 'D'], ['N', 'C', 'T'], ['N', 'C', 'D'], ['N', 'T', 'D'],
-            ['O', 'C', 'T'], ['O', 'C', 'D'], ['C', 'T', 'D'], ['O', 'T', 'D']
-        ]
-        MIS_4 = [
-            ['N', 'O', 'C', 'T'], ['N', 'O', 'C', 'D'], ['N', 'O', 'T', 'D'], ['N', 'T', 'D', 'C'], ['T', 'D', 'C', 'O']
-        ]
+        MIS_2 = [['N', 'O'], ['N', 'C'], ['N', 'T'], ['N', 'D'], ['O', 'C'], ['O', 'T'], ['O', 'D'], ['T', 'C'], ['T', 'D'], ['C', 'D']]
+        MIS_3 = [['N', 'O', 'C'], ['N', 'O', 'T'], ['N', 'O', 'D'], ['N', 'C', 'T'], ['N', 'C', 'D'], ['N', 'T', 'D'], ['O', 'C', 'T'], ['O', 'C', 'D'], ['C', 'T', 'D'], ['O', 'T', 'D']]
+        MIS_4 = [['N', 'O', 'C', 'T'], ['N', 'O', 'C', 'D'], ['N', 'O', 'T', 'D'], ['N', 'T', 'D', 'C'], ['T', 'D', 'C', 'O']]
         MIS_5 = [['N', 'O', 'C', 'T', 'D']]
 
         MIS = MIS_1 + MIS_2 + MIS_3
@@ -184,11 +176,11 @@ class SimplifiedCoralGraph(GraphInterface):
     @staticmethod
     def get_interventional_ranges():
         return OrderedDict([
-            ('N', [-2, 5]),
-            ('O', [3, 4]),
-            ('C', [0.3, 0.4]),
-            ('T', [2300, 2400]),
-            ('D', [2000, 2080])
+          ('N', [-2, 5]),
+          ('O', [2, 4]),
+          ('C', [0, 1]),
+          ('T', [2450, 2500]),
+          ('D', [1950, 1965])
         ])
 
     def fit_all_gaussian_processes(self, measurements=None):

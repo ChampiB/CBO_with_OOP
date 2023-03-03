@@ -4,7 +4,7 @@ from src.graphs import GraphInterface
 from src.utils_functions import fit_gaussian_process
 import numpy as np
 import sys
-sys.path.append("../..")
+sys.path.append("../../..")
 
 
 class CompleteGraph(GraphInterface):
