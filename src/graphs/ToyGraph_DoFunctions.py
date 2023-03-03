@@ -99,22 +99,13 @@ def compute_do_X(observational_samples, functions, value):
     
     for i in range(num_interventions):
         
-        mean_do[i], var_do[i] = Causal_effect_DO({'X':value[i]}, functions = functions, parents_Y = parents_Y, 
-                                               children = children, parents=parents_nodes, 
-                                               independent_nodes = independent_nodes)
+        mean_do[i], var_do[i] = Causal_effect_DO({'X': value[i]}, functions=functions, parents_Y=parents_Y,
+                                               children=children, parents=parents_nodes,
+                                               independent_nodes=independent_nodes)
     return mean_do, var_do
 
 
 def compute_do_Z(observational_samples, functions, value):
-
-    # gp_X_Z = functions['gp_X_Z']
-    
-    # X = np.asarray(observational_samples['X'])[:,np.newaxis]
-    
-    # intervened_inputs = np.hstack((X,np.repeat(value, X.shape[0])[:,np.newaxis]))
-    # mean_do = np.mean(gp_X_Z.predict(intervened_inputs)[0])
-    
-    # var_do = np.mean(gp_X_Z.predict(intervened_inputs)[1])
 
     # Compute Do effects as in the notebook
     Z = observational_samples['Z']

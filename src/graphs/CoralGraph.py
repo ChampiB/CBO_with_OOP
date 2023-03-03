@@ -68,6 +68,7 @@ class CoralGraph(Graph):
             ["N", "T", "D", "S"],
             ["C", "T", "D", "S", "N", "L", "TE"]
         ]
+
         self.fit_parameters = [
             [1., 1., 10., False],
             [1., 1., 1., True],

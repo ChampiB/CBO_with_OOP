@@ -25,7 +25,7 @@ class Cost(Acquisition):
 
 
 def total_cost(intervention_variables, costs, x_new_dict):
-    total_cost = 0.
+    cost = 0.
     for i in range(len(intervention_variables)):
-        total_cost += costs[intervention_variables[i]](x_new_dict[intervention_variables[i]])
-    return total_cost
+        cost += costs[intervention_variables[i]](x_new_dict[intervention_variables[i]])
+    return cost
