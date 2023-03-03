@@ -27,7 +27,6 @@ class DataLoader:
 
         # The list a supported graphs
         graph_classes = {
-            'toy_graph': ToyGraph,
             'complete_graph': CompleteGraph,
             'coral_graph': CoralGraph,
             'simplified_coral_graph': SimplifiedCoralGraph
