@@ -102,6 +102,18 @@ class SimplifiedCoralGraph(GraphInterface):
 
     def define_sem(self):
 
+        # The dependencies between the variables
+        self.var_dependencies = {
+            "Y": ["L", "N", "P", "O", "C", "CO", "TE"],
+            "P": ["S", "T", "D", "TE"],
+            "O": ["S", "T", "D", "TE"],
+            "CO": ["S", "T", "D", "TE"],
+            "T": ["S"],
+            "D": ["S"],
+            "C": ["N", "L", "TE"],
+            "S": ["TE"],
+            "TE": ["L"],
+        }
         def fN(epsilon, **kwargs):
             return self.dist_Nutrients_PC1.sample(1)[0][0][0]
 
