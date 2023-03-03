@@ -102,7 +102,8 @@ class CompleteGraph(GraphInterface):
         POMIS = [['B'], ['D'], ['E'], ['B', 'D'], ['D', 'E']]
         return MIS if set_name == "MIS" else POMIS
 
-    def get_interventional_ranges(self):
+    @staticmethod
+    def get_interventional_ranges():
         return OrderedDict([
             ('E', [-6, 3]),
             ('B', [-5, 4]),

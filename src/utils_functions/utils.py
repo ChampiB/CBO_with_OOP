@@ -43,6 +43,3 @@ def fit_gaussian_process(x, y, parameter_list):
     gp.likelihood.variance.fix(1e-2)
     gp.optimize()
     return gp
-
-
-
