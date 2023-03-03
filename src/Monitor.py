@@ -52,7 +52,6 @@ class Monitor:
             max_ranges = [ranges[intervention][1] for intervention in cbo.exploration_set[s]]
             # TODO: update this with new functions
             interventions = {intervention: '' for intervention in cbo.exploration_set[s]}
-            print(interventions)
             space = get_parameter_space(interventions, min_ranges, max_ranges)
             target_function = partial(compute_interventions, cbo.graph.define_sem(), interventions, target_variable='Y')
             self.target_function_list.append(target_function)
@@ -72,13 +71,13 @@ class Monitor:
         """
         Start monitoring the CBO agent
         """
-        self.start_time = time.clock()
+        self.start_time = time.time()
 
     def stop(self):
         """
         Stop monitoring the CBO agent
         """
-        self.total_time = time.clock() - self.start_time
+        self.total_time = time.time() - self.start_time
 
     def log_agent_behaviour(self, act):
         """
@@ -123,7 +122,7 @@ class Monitor:
         self.add_intervention_data(target_ys, intervention, acquisition_xs)
 
         # Update the dict storing the current optimal solution.
-        var_to_intervene = self.cbo.interventions[intervention]
+        var_to_intervene = self.cbo.intervention_names[intervention]
         self.current_best_x[var_to_intervene].append(acquisition_xs[intervention][0][0])
         self.current_best_y[var_to_intervene].append(target_ys[0][0])
 

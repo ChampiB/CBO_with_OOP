@@ -1,8 +1,12 @@
+import numpy as np
 import abc
 
 
-class GraphStructure:
+class Graph:
     __metaclass__ = abc.ABCMeta
+
+    def __init__(self, manipulative_variables):
+        self.manipulative_variables = manipulative_variables
 
     @abc.abstractmethod
     def define_sem(self):
@@ -37,3 +41,14 @@ class GraphStructure:
         :return: the Gaussian process' name
         """
         return 'gp_' + "_".join(interventions)
+
+    @staticmethod
+    def cost(fix_cost, variable_cost, intervention_value, **kwargs):
+        total_cost = fix_cost
+        if variable_cost is True:
+            total_cost += np.sum(np.abs(intervention_value))
+        return total_cost
+
+    @abc.abstractmethod
+    def get_cost_structure(self, type_cost):
+        raise NotImplementedError("Subclass should implement this.")

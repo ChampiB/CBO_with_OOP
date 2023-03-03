@@ -1,13 +1,13 @@
+from functools import partial
 from collections import OrderedDict
-from src.graphs import GraphStructure
+from src.graphs import Graph
 from src.utils_functions import fit_gaussian_process
 from .CompleteGraph_DoFunctions import *
-from .CompleteGraph_CostFunctions import define_costs
 import sys
 sys.path.append("../..")
 
 
-class CompleteGraph(GraphStructure):
+class CompleteGraph(Graph):
     """
     An instance of the class graph giving the graph structure in the synthetic example 
     
@@ -17,19 +17,16 @@ class CompleteGraph(GraphStructure):
 
     def __init__(self, observational_samples):
 
-        self.A = np.asarray(observational_samples['A'])[:,np.newaxis]
-        self.B = np.asarray(observational_samples['B'])[:,np.newaxis]
-        self.C = np.asarray(observational_samples['C'])[:,np.newaxis]
-        self.D = np.asarray(observational_samples['D'])[:,np.newaxis]
-        self.E = np.asarray(observational_samples['E'])[:,np.newaxis]
-        self.F = np.asarray(observational_samples['F'])[:,np.newaxis]
-        self.Y = np.asarray(observational_samples['Y'])[:,np.newaxis]
+        # Call the parent constructor
+        super().__init__(['B', 'D', 'E'])
 
-        self.do_functions = {
-            'compute_do_BDEF': compute_do_BDEF, 'compute_do_BDE': compute_do_BDE, 'compute_do_BD': compute_do_BD,
-            'compute_do_BE': compute_do_BE, 'compute_do_DE': compute_do_DE, 'compute_do_B': compute_do_B,
-            'compute_do_D': compute_do_D, 'compute_do_E': compute_do_E
-        }
+        self.A = np.asarray(observational_samples['A'])[:, np.newaxis]
+        self.B = np.asarray(observational_samples['B'])[:, np.newaxis]
+        self.C = np.asarray(observational_samples['C'])[:, np.newaxis]
+        self.D = np.asarray(observational_samples['D'])[:, np.newaxis]
+        self.E = np.asarray(observational_samples['E'])[:, np.newaxis]
+        self.F = np.asarray(observational_samples['F'])[:, np.newaxis]
+        self.Y = np.asarray(observational_samples['Y'])[:, np.newaxis]
 
     def define_sem(self):
 
@@ -78,10 +75,6 @@ class CompleteGraph(GraphStructure):
         MIS = [['B'], ['D'], ['E'], ['B', 'D'], ['B', 'E'], ['D', 'E']]
         POMIS = [['B'], ['D'], ['E'], ['B', 'D'], ['D', 'E']]
         return MIS if set_name == "MIS" else POMIS
-
-    @staticmethod
-    def get_manipulative_variables():
-        return ['B', 'D', 'E']
 
     def get_interventional_ranges(self):
         min_intervention_e = -6
@@ -147,5 +140,45 @@ class CompleteGraph(GraphStructure):
         return functions
 
     def get_cost_structure(self, type_cost):
-        costs = define_costs(type_cost)
-        return costs
+
+        if type_cost == 1:
+            return OrderedDict([
+                ('A', partial(self.cost, 1, False)),
+                ('B', partial(self.cost, 1, False)),
+                ('C', partial(self.cost, 1, False)),
+                ('D', partial(self.cost, 1, False)),
+                ('E', partial(self.cost, 1, False)),
+                ('F', partial(self.cost, 1, False)),
+            ])
+
+        if type_cost == 2:
+            return OrderedDict([
+                ('A', partial(self.cost, 1, False)),
+                ('B', partial(self.cost, 10, False)),
+                ('C', partial(self.cost, 2, False)),
+                ('D', partial(self.cost, 5, False)),
+                ('E', partial(self.cost, 20, False)),
+                ('F', partial(self.cost, 3, False)),
+            ])
+
+        if type_cost == 3:
+            return OrderedDict([
+                ('A', partial(self.cost, 1, True)),
+                ('B', partial(self.cost, 10, True)),
+                ('C', partial(self.cost, 2, True)),
+                ('D', partial(self.cost, 5, True)),
+                ('E', partial(self.cost, 20, True)),
+                ('F', partial(self.cost, 3, True)),
+            ])
+
+        if type_cost == 4:
+            return OrderedDict([
+                ('A', partial(self.cost, 1, True)),
+                ('B', partial(self.cost, 1, True)),
+                ('C', partial(self.cost, 1, True)),
+                ('D', partial(self.cost, 1, True)),
+                ('E', partial(self.cost, 1, True)),
+                ('F', partial(self.cost, 1, True)),
+            ])
+
+        raise RuntimeError(f"[ERROR] Invalid cost type: {type_cost}")

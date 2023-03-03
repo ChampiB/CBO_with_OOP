@@ -1,17 +1,17 @@
+from functools import partial
 import copy
 from collections import OrderedDict
 from scipy.stats import gamma
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.mixture import GaussianMixture
-from src.graphs import GraphStructure
+from src.graphs import Graph
 from src.utils_functions import fit_gaussian_process
-from .CoralGraph_CostFunctions import define_costs
 import sys
 sys.path.append("../..")
 
 
-class CoralGraph(GraphStructure):
+class CoralGraph(Graph):
     """
     An instance of the class graph giving the graph structure in the Coral reef example
 
@@ -20,6 +20,9 @@ class CoralGraph(GraphStructure):
     """
 
     def __init__(self, measurements, true_measurements):
+
+        # Call the parent constructor
+        super().__init__(['N', 'O', 'C', 'T', 'D'])
 
         # The variable names
         self.var_names = ['Y', 'N', 'CO', 'T', 'D', 'P', 'O', 'S', 'L', 'TE', 'C']
@@ -170,10 +173,6 @@ class CoralGraph(GraphStructure):
         return MIS if set_name == "MIS" else POMIS
 
     @staticmethod
-    def get_manipulative_variables():
-        return ['N', 'O', 'C', 'T', 'D']
-
-    @staticmethod
     def get_interventional_ranges():
         return OrderedDict([
           ('N', [-2, 5]),
@@ -211,6 +210,42 @@ class CoralGraph(GraphStructure):
             for name, x, output, parameter in zip(names, xs, outputs, self.fit_parameters)
         }
 
-    @staticmethod
-    def get_cost_structure(type_cost):
-        return define_costs(type_cost)
+    def get_cost_structure(self, type_cost):
+
+        if type_cost == 1:
+            return OrderedDict([
+                ('N', partial(self.cost, 1, False)),
+                ('O', partial(self.cost, 1, False)),
+                ('C', partial(self.cost, 1, False)),
+                ('T', partial(self.cost, 1, False)),
+                ('D', partial(self.cost, 1, False)),
+            ])
+
+        if type_cost == 2:
+            return OrderedDict([
+                ('N', partial(self.cost, 1, False)),
+                ('O', partial(self.cost, 10, False)),
+                ('C', partial(self.cost, 2, False)),
+                ('T', partial(self.cost, 5, False)),
+                ('D', partial(self.cost, 20, False)),
+            ])
+
+        if type_cost == 3:
+            return OrderedDict([
+                ('N', partial(self.cost, 1, True)),
+                ('O', partial(self.cost, 10, True)),
+                ('C', partial(self.cost, 2, True)),
+                ('T', partial(self.cost, 5, True)),
+                ('D', partial(self.cost, 20, True)),
+            ])
+
+        if type_cost == 4:
+            return OrderedDict([
+                ('N', partial(self.cost, 1, True)),
+                ('O', partial(self.cost, 1, True)),
+                ('C', partial(self.cost, 1, True)),
+                ('T', partial(self.cost, 1, True)),
+                ('D', partial(self.cost, 1, True)),
+            ])
+
+        raise RuntimeError(f"[ERROR] Invalid cost type: {type_cost}")

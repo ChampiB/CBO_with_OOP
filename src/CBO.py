@@ -180,10 +180,10 @@ class CBO:
 		"""
 
 		# Compute the observation coverage.
-		coverage_total = compute_coverage(self.measurements, self.graph.manipulative_variables(), self.interventional_ranges)[2]
+		coverage_total = compute_coverage(self.measurements, self.graph.manipulative_variables, self.interventional_ranges)[2]
 
 		# Compute epsilon.
-		coverage_obs = update_hull(self.measurements, self.graph.manipulative_variables())
+		coverage_obs = update_hull(self.measurements, self.graph.manipulative_variables)
 		rescale = self.measurements.shape[0] / self.max_n
 		return (coverage_obs / coverage_total) / rescale
 
@@ -284,15 +284,8 @@ class CBO:
 		:param acquisition_xs: the values of x that maximise the acquisition function
 		:return: the intervention's cost
 		"""
-		for i, intervention in enumerate(self.interventions[intervention]):
-			print("1) ", i)
-			print("2) ", intervention)
-			print("3) ", acquisition_xs)
-			print("4) ", acquisition_xs[intervention])
-			print("5) ", acquisition_xs[intervention][0, i])
-
 		x = {
-			intervention: acquisition_xs[intervention][0, i]
-			for i, intervention in enumerate(self.interventions[intervention])
+			intervention_var: acquisition_xs[intervention][0, i]
+			for i, intervention_var in enumerate(intervention_set)
 		}
 		return total_cost(intervention_set, self.costs, x)
