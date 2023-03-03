@@ -7,3 +7,4 @@ emukit~=0.4.10
 GPy~=1.10.0
 scikit-learn~=1.2.1
 paramz~=0.9.5
+hydra-core~=1.3
