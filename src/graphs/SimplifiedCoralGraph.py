@@ -3,14 +3,15 @@ from collections import OrderedDict
 import scipy
 from sklearn.linear_model import LinearRegression
 import sklearn.mixture
-from src.graphs import Graph
+from src.graphs import GraphInterface
 from src.utils_functions import fit_gaussian_process
-from .SimplifiedCoralGraph_DoFunctions import *
+import copy
+import numpy as np
 import sys
 sys.path.append("../..")
 
 
-class SimplifiedCoralGraph(Graph):
+class SimplifiedCoralGraph(GraphInterface):
     """
     An instance of the class graph giving the graph structure in the Coral reef example 
     
@@ -18,51 +19,85 @@ class SimplifiedCoralGraph(Graph):
     ----------
     """
 
-    def __init__(self, observational_samples, true_observational_samples):
+    def __init__(self, measurements, true_measurements):
 
         # Call the parent constructor
         super().__init__(['N', 'O', 'C', 'T', 'D'])
 
-        self.Y = np.asarray(observational_samples['Y'])[:, np.newaxis]
-        self.N = np.asarray(observational_samples['N'])[:, np.newaxis]
-        self.CO = np.asarray(observational_samples['CO'])[:, np.newaxis]
-        self.T = np.asarray(observational_samples['T'])[:, np.newaxis]
-        self.D = np.asarray(observational_samples['D'])[:, np.newaxis]
-        self.P = np.asarray(observational_samples['P'])[:, np.newaxis]
-        self.O = np.asarray(observational_samples['O'])[:, np.newaxis]
-        self.S = np.asarray(observational_samples['S'])[:, np.newaxis]
-        self.L = np.asarray(observational_samples['L'])[:, np.newaxis]
-        self.TE = np.asarray(observational_samples['TE'])[:, np.newaxis]
-        self.C = np.asarray(observational_samples['C'])[:, np.newaxis]
+        # The variable names
+        self.var_names = ['Y', 'N', 'CO', 'T', 'D', 'P', 'O', 'S', 'L', 'TE', 'C']
 
-        true_Y = np.asarray(true_observational_samples['Y'])[:, np.newaxis]
-        true_N = np.asarray(true_observational_samples['N'])[:, np.newaxis]
-        true_CO = np.asarray(true_observational_samples['CO'])[:, np.newaxis]
-        true_T = np.asarray(true_observational_samples['T'])[:, np.newaxis]
-        true_D = np.asarray(true_observational_samples['D'])[:, np.newaxis]
-        true_P = np.asarray(true_observational_samples['P'])[:, np.newaxis]
-        true_O = np.asarray(true_observational_samples['O'])[:, np.newaxis]
-        true_S = np.asarray(true_observational_samples['S'])[:, np.newaxis]
-        true_L = np.asarray(true_observational_samples['L'])[:, np.newaxis]
-        true_TE = np.asarray(true_observational_samples['TE'])[:, np.newaxis]
-        true_C = np.asarray(true_observational_samples['C'])[:, np.newaxis]
+        # The measurements made by the agents
+        self.measurements = {
+            var_name: np.asarray(measurements[var_name])[:, np.newaxis] for var_name in self.var_names
+        }
 
-        self.reg_Y = LinearRegression().fit(np.hstack((true_L, true_N, true_P, true_O, true_C, true_CO, true_TE)), true_Y)
-        self.reg_P = LinearRegression().fit(np.hstack((true_S, true_T, true_D, true_TE)), true_P)
-        self.reg_O = LinearRegression().fit(np.hstack((true_S, true_T, true_D, true_TE)), true_O)
-        self.reg_CO = LinearRegression().fit(np.hstack((true_S, true_T, true_D, true_TE)), true_CO)
-        self.reg_T = LinearRegression().fit(true_S, true_T)
-        self.reg_D = LinearRegression().fit(true_S, true_D)
-        self.reg_C = LinearRegression().fit(np.hstack((true_N, true_L, true_TE)), true_C)
-        self.reg_S = LinearRegression().fit(true_TE, true_S)
-        self.reg_TE = LinearRegression().fit(true_L, true_TE)
+        # The ground truth measurements
+        self.true_measurements = {
+            var_name: np.asarray(true_measurements[var_name])[:, np.newaxis] for var_name in self.var_names
+        }
+
+        self.fit_dependencies = [
+            ["N"],
+            ["O", "S", "T", "D", "TE"],
+            ["C", "N", "L", "TE"],
+            ["T", "S"],
+            ["D", "S"],
+            ["N", "O", "S", "T", "D", "TE"],
+            ["N", "T", "S"],
+            ["N", "D", "S"],
+            ["O", "C", "N", "L", "TE", "S", "T", "D"],
+            ["T", "C", "S", "TE", "L", "N"],
+            ["T", "D", "S"],
+            ["C", "D", "S", "TE", "L", "N"],
+            ["N", "C", "T", "S", "N", "L", "TE"],
+            ["N", "T", "D", "S"],
+            ["C", "T", "D", "S", "N", "L", "TE"]
+        ]
+
+        # The dependencies between the variables
+        self.var_dependencies = {
+            "Y": ["L", "N", "P", "O", "C", "CO", "TE"],
+            "P": ["S", "T", "D", "TE"],
+            "O": ["S", "T", "D", "TE"],
+            "CO": ["S", "T", "D", "TE"],
+            "T": ["S"],
+            "D": ["S"],
+            "C": ["N", "L", "TE"],
+            "S": ["TE"],
+            "TE": ["L"],
+        }
+
+        self.fit_parameters = [
+            [1., 1., 10., False],
+            [1., 1., 1., True],
+            [1., 1., 1., True],
+            [1., 1., 1., True],
+            [1., 1., 10., True],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False]
+        ]
+
+        # Creating linear regression models and fit them on the available data.
+        self.regressions = {}
+        for var_name, dependencies in self.var_dependencies.items():
+            inputs = np.hstack([self.true_measurements[dependency] for dependency in dependencies])
+            self.regressions[var_name] = LinearRegression().fit(inputs, self.true_measurements[var_name])
 
         # Define distributions for the exogenous variables
-        params_list = scipy.stats.gamma.fit(true_L)
+        params_list = scipy.stats.gamma.fit(self.true_measurements["L"])
         self.dist_Light = scipy.stats.gamma(a=params_list[0], loc=params_list[1], scale=params_list[2])
 
         mixture = sklearn.mixture.GaussianMixture(n_components=3)
-        mixture.fit(true_N)
+        mixture.fit(self.true_measurements["N"])
         self.dist_Nutrients_PC1 = mixture
 
     def define_sem(self):
@@ -75,39 +110,39 @@ class SimplifiedCoralGraph(Graph):
 
         def fTE(epsilon, L, **kwargs):
             X = np.ones((1, 1)) * L
-            return np.float64(self.reg_TE.predict(X))
+            return np.float64(self.regressions["TE"].predict(X))
 
         def fC(epsilon, N, L, TE, **kwargs):
             X = np.ones((1, 1)) * np.hstack((N, L, TE))
-            return np.float64(self.reg_C.predict(X))
+            return np.float64(self.regressions["C"].predict(X))
 
         def fS(epsilon, TE, **kwargs):
             X = np.ones((1, 1)) * TE
-            return np.float64(self.reg_S.predict(X))
+            return np.float64(self.regressions["S"].predict(X))
 
         def fT(epsilon, S, **kwargs):
             X = np.ones((1, 1)) * S
-            return np.float64(self.reg_T.predict(X))
+            return np.float64(self.regressions["T"].predict(X))
 
         def fD(epsilon, S, **kwargs):
             X = np.ones((1, 1)) * S
-            return np.float64(self.reg_D.predict(X))
+            return np.float64(self.regressions["D"].predict(X))
 
         def fP(epsilon, S, T, D, TE, **kwargs):
             X = np.ones((1, 1)) * np.hstack((S, T, D, TE))
-            return np.float64(self.reg_P.predict(X))
+            return np.float64(self.regressions["P"].predict(X))
 
         def fO(epsilon, S, T, D, TE, **kwargs):
             X = np.ones((1, 1)) * np.hstack((S, T, D, TE))
-            return np.float64(self.reg_O.predict(X))
+            return np.float64(self.regressions["O"].predict(X))
 
         def fCO(epsilon, S, T, D, TE, **kwargs):
             X = np.ones((1, 1)) * np.hstack((S, T, D, TE))
-            return np.float64(self.reg_CO.predict(X))
+            return np.float64(self.regressions["CO"].predict(X))
 
         def fY(epsilon, L, N, P, O, C, CO, TE, **kwargs):
             X = np.ones((1, 1)) * np.hstack((L, N, P, O, C, CO, TE))
-            return np.float64(self.reg_Y.predict(X))
+            return np.float64(self.regressions["Y"].predict(X))
 
         graph = OrderedDict([
             ('N', fN),
@@ -156,82 +191,33 @@ class SimplifiedCoralGraph(Graph):
             ('D', [2000, 2080])
         ])
 
-    def fit_all_gaussian_processes(self):
-        functions = {}
-        inputs_list = [self.N, np.hstack((self.O, self.S, self.T, self.D, self.TE)),
-                       np.hstack((self.C, self.N, self.L, self.TE)), np.hstack((self.T, self.S)),
-                       np.hstack((self.D, self.S)), np.hstack((self.N, self.O, self.S, self.T, self.D, self.TE)),
-                       np.hstack((self.N, self.T, self.S)),
-                       np.hstack((self.N, self.D, self.S)),
-                       np.hstack((self.O, self.C, self.N, self.L, self.TE, self.S, self.T, self.D)),
-                       np.hstack((self.T, self.C, self.S, self.TE, self.L, self.N)),
-                       np.hstack((self.T, self.D, self.S)),
-                       np.hstack((self.C, self.D, self.S, self.TE, self.L, self.N)),
-                       np.hstack((self.N, self.C, self.T, self.S, self.N, self.L, self.TE)),
-                       np.hstack((self.N, self.T, self.D, self.S)),
-                       np.hstack((self.C, self.T, self.D, self.S, self.N, self.L, self.TE))]
+    def fit_all_gaussian_processes(self, measurements=None):
+        # If no measurements provided as input, use the measurements in self
+        measurements = self.measurements if measurements is None else {
+            var_name: np.asarray(measurements[var_name])[:, np.newaxis]
+            for var_name, measurement in measurements.items()
+        }
 
-        output_list = [self.Y, self.Y, self.Y, self.Y, self.Y, self.Y, self.Y, self.Y, self.Y, self.Y, self.Y, self.Y,
-                       self.Y, self.Y, self.Y]
+        # Retrieve the measurements associated to each variable in the graph
+        var_measurements = copy.deepcopy(measurements)
 
-        name_list = ['gp_N', 'gp_O_S_T_D_TE', 'gp_C_N_L_TE', 'gp_T_S', 'gp_D_S', 'gp_N_O_S_T_D_TE', 'gp_N_T_S',
-                     'gp_N_D_S', 'gp_O_C_N_L_TE_S_T_D',
-                     'gp_T_C_S_TE_L_N', 'gp_T_D_S', 'gp_C_D_S_TE_L_N', 'gp_N_C_T_S_N_L_TE', 'gp_N_T_D_S',
-                     'gp_C_T_D_S_N_L_TE']
+        # For each variable in the graph, concatenate the measurements of all the variables it depends on
+        xs = [
+            np.hstack([var_measurements[var_name] for var_name in dependencies])
+            for dependencies in self.fit_dependencies
+        ]
 
-        parameter_list = [[1., 1., 10., False], [1., 1., 1., True], [1., 1., 1., True], [1., 1., 1., True],
-                          [1., 1., 10., True],
-                          [1., 1., 1., False], [1., 1., 1., False], [1., 1., 1., False], [1., 1., 1., False],
-                          [1., 1., 1., False], [1., 1., 1., False], [1., 1., 1., False],
-                          [1., 1., 1., False], [1., 1., 1., False], [1., 1., 1., False]]
+        # For each variable in the graph, retrieve the measurements of the target variable Y
+        outputs = [measurements["Y"]] * len(xs)
 
-        # Fit all conditional models
-        for i in range(len(inputs_list)):
-            functions[name_list[i]] = fit_gaussian_process(inputs_list[i], output_list[i], parameter_list[i])
+        # Create the name of the Gaussian process corresponding to each variable in the graph
+        names = ["gp_" + "_".join(dependencies) for dependencies in self.fit_dependencies]
 
-        return functions
-
-    def fit_all_gaussian_processes(self, observational_samples):
-        Y = np.asarray(observational_samples['Y'])[:, np.newaxis]
-        N = np.asarray(observational_samples['N'])[:, np.newaxis]
-        CO = np.asarray(observational_samples['CO'])[:, np.newaxis]
-        T = np.asarray(observational_samples['T'])[:, np.newaxis]
-        D = np.asarray(observational_samples['D'])[:, np.newaxis]
-        P = np.asarray(observational_samples['P'])[:, np.newaxis]
-        O = np.asarray(observational_samples['O'])[:, np.newaxis]
-        S = np.asarray(observational_samples['S'])[:, np.newaxis]
-        L = np.asarray(observational_samples['L'])[:, np.newaxis]
-        TE = np.asarray(observational_samples['TE'])[:, np.newaxis]
-        C = np.asarray(observational_samples['C'])[:, np.newaxis]
-
-        functions = {}
-        inputs_list = [N, np.hstack((O, S, T, D, TE)), np.hstack((C, N, L, TE)), np.hstack((T, S)),
-                       np.hstack((D, S)), np.hstack((N, O, S, T, D, TE)), np.hstack((N, T, S)),
-                       np.hstack((N, D, S)), np.hstack((O, C, N, L, TE, S, T, D)),
-                       np.hstack((T, C, S, TE, L, N)), np.hstack((T, D, S)),
-                       np.hstack((C, D, S, TE, L, N)), np.hstack((N, C, T, S, N, L, TE)),
-                       np.hstack((N, T, D, S)), np.hstack((C, T, D, S, N, L, TE))]
-
-        output_list = [Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y, Y]
-
-        name_list = ['gp_N', 'gp_O_S_T_D_TE', 'gp_C_N_L_TE', 'gp_T_S', 'gp_D_S', 'gp_N_O_S_T_D_TE', 'gp_N_T_S',
-                     'gp_N_D_S', 'gp_O_C_N_L_TE_S_T_D',
-                     'gp_T_C_S_TE_L_N', 'gp_T_D_S', 'gp_C_D_S_TE_L_N', 'gp_N_C_T_S_N_L_TE', 'gp_N_T_D_S',
-                     'gp_C_T_D_S_N_L_TE']
-
-        parameter_list = [[1., 1., 10., False], [1., 1., 1., True], [1., 1., 1., True], [1., 1., 1., True],
-                          [1., 1., 10., True],
-                          [1., 1., 1., False], [1., 1., 1., False], [1., 1., 1., False], [1., 1., 1., False],
-                          [1., 1., 1., False], [1., 1., 1., False], [1., 1., 1., False],
-                          [1., 1., 1., False], [1., 1., 1., False], [1., 1., 1., False]]
-
-        # Fit all conditional models
-        for i in range(len(inputs_list)):
-            X = inputs_list[i]
-            Y = output_list[i]
-            functions[name_list[i]] = fit_gaussian_process(X, Y, parameter_list[i])
-
-        return functions
+        # Fit all conditional Gaussian processes
+        return {
+            name: fit_gaussian_process(x, output, parameter)
+            for name, x, output, parameter in zip(names, xs, outputs, self.fit_parameters)
+        }
 
     def get_cost_structure(self, type_cost):
 

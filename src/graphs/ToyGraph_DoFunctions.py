@@ -9,14 +9,14 @@ def Causal_effect_DO(*interventions, functions,
                      children, 
                      parents, 
                      independent_nodes):
-    ## This function can be used to compute the CE of variables that are confounded via Back door adjustment
-    ## so that no adjustment is needed
+    # This function can be used to compute the CE of variables that are confounded via Back door adjustment
+    # so that no adjustment is needed
 
     final_variables = OrderedDict()
     
     num_observations = list(parents_Y.items())[0][1].shape[0]
 
-    ## We should aggregate the tuple here
+    # We should aggregate the tuple here
     for variable, value in interventions[0].items():
     
         num_children = len(children[variable])
@@ -26,45 +26,41 @@ def Causal_effect_DO(*interventions, functions,
         subset_children = children[variable]
         subset_parents = parents[variable]
         subset_independent_nodes = independent_nodes[variable]
-        
-        
-        ## This is changing the intervention variable
+
+        # This is changing the intervention variable
         final_variables[variable] = value*np.ones((num_observations,1))
         
-        ## This is changing the children
+        # This is changing the children
         if num_children != 0:
             for i in range(num_children):
-                ## This should update the values of the children - eg for X this is modifying Z
+                # This should update the values of the children - eg for X this is modifying Z
                 functions_to_get = list(subset_children.items())[0][0][-1]
-                ## If this function gets other variables that are not children of the intervention we need to add them here
-                ## This is changing the X_2 - taking the mean value of GP2
+                # If this function gets other variables that are not children of the intervention we need to add them here
+                # This is changing the X_2 - taking the mean value of GP2
                 children_value = functions[functions_to_get].predict(value*np.ones((num_observations,1)))[0]
                 final_variables[list(subset_children.keys())[0]] = children_value
 
-            
-        ## The independent nodes stay the same - If dont exist dont need to provide
+        # The independent nodes stay the same - If dont exist dont need to provide
         if num_independent_nodes != 0:
             for j in range(num_independent_nodes):
                 final_variables[list(subset_independent_nodes.keys())[j]] = list(subset_independent_nodes.items())[j][1]
             
-        ## The parents nodes stay the same - If dont exist dont need to provide
+        # The parents nodes stay the same - If dont exist dont need to provide
         if num_parents != 0:
             for j in range(num_parents):
                 final_variables[list(subset_parents.keys())[j]] = list(subset_parents.items())[j][1]
     
-    
-    ## after having changed all the variables, we predict the Y
+    # after having changed all the variables, we predict the Y
     num_parents_Y = len(parents_Y.keys())
     Inputs_Y = np.zeros((num_observations, num_parents_Y))
     
-    ## Getting the parents of Y to compute the CE on Y 
+    # Getting the parents of Y to compute the CE on Y
     for i in range(len(parents_Y.keys())):
         var = list(parents_Y.keys())[i]
         Inputs_Y[:,i] = final_variables[var][:,0]
 
     gp_Y = functions['Y']
     
-    #samples = (gp_Y.posterior_samples_f(Inputs_Y, size=1000))**2
     causal_effect_mean = np.mean(gp_Y.predict(Inputs_Y)[0])
     causal_effect_var = np.mean(gp_Y.predict(Inputs_Y)[1])
 

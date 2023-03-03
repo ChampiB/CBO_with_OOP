@@ -2,7 +2,7 @@ import numpy as np
 import abc
 
 
-class Graph:
+class GraphInterface:
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, manipulative_variables):

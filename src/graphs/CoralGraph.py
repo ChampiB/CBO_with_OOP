@@ -5,13 +5,13 @@ from scipy.stats import gamma
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.mixture import GaussianMixture
-from src.graphs import Graph
+from src.graphs import GraphInterface
 from src.utils_functions import fit_gaussian_process
 import sys
 sys.path.append("../..")
 
 
-class CoralGraph(Graph):
+class CoralGraph(GraphInterface):
     """
     An instance of the class graph giving the graph structure in the Coral reef example
 

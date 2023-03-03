@@ -1,5 +1,5 @@
 from functools import partial
-from src.graphs import Graph
+from src.graphs import GraphInterface
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
 from .ToyGraph_DoFunctions import *
@@ -7,7 +7,7 @@ import sys
 sys.path.append("../..")
 
 
-class ToyGraph(Graph):
+class ToyGraph(GraphInterface):
     """
     An instance of the class graph giving the graph structure in the toy example 
     
@@ -15,14 +15,18 @@ class ToyGraph(Graph):
     ----------
     """
 
-    def __init__(self, observational_samples):
+    def __init__(self, measurements):
 
         # Call the parent constructor
         super().__init__(['X', 'Z'])
 
-        self.X = np.asarray(observational_samples['X'])[:, np.newaxis]
-        self.Y = np.asarray(observational_samples['Y'])[:, np.newaxis]
-        self.Z = np.asarray(observational_samples['Z'])[:, np.newaxis]
+        # The variable names
+        self.var_names = ['X', 'Y', 'Z']
+
+        # The measurements made by the agents
+        self.measurements = {
+            var_name: np.asarray(measurements[var_name])[:, np.newaxis] for var_name in self.var_names
+        }
 
     def define_sem(self):
 
@@ -56,39 +60,23 @@ class ToyGraph(Graph):
             ('Z', [-5, 20]),
         ])
 
-    def fit_all_gaussian_processes(self):
+    def fit_all_gaussian_processes(self, measurements=None):
+        # If no measurements provided as input, use the measurements in self
+        measurements = self.measurements if measurements is None else {
+            var_name: np.asarray(measurements[var_name])[:, np.newaxis]
+            for var_name, measurement in measurements.items()
+        }
 
-        num_features = self.Z.shape[1]
+        num_features = measurements["Z"].shape[1]
         kernel = RBF(num_features, ARD=False, lengthscale=1., variance=1.)
-        gp_Y = GPRegression(X=self.Z, Y=self.Y, kernel=kernel, noise_var=1.)
+        gp_Y = GPRegression(X=measurements["Z"], Y=measurements["Y"], kernel=kernel, noise_var=1.)
         gp_Y.optimize()
 
-        num_features = self.X.shape[1]
+        num_features = measurements["X"].shape[1]
         kernel = RBF(num_features, ARD=False, lengthscale=1., variance=1.)
-        gp_Z = GPRegression(X=self.X, Y=self.Z, kernel=kernel)
+        gp_Z = GPRegression(X=measurements["X"], Y=measurements["Z"], kernel=kernel)
         gp_Z.optimize()
 
-        return OrderedDict([
-            ('Y', gp_Y),
-            ('Z', gp_Z),
-            ('X', [])
-        ])
-
-    def fit_all_gaussian_processes(self, observational_samples):
-        X = np.asarray(observational_samples['X'])[:, np.newaxis]
-        Z = np.asarray(observational_samples['Z'])[:, np.newaxis]
-        Y = np.asarray(observational_samples['Y'])[:, np.newaxis]
-
-        num_features = Z.shape[1]
-        kernel = RBF(num_features, ARD=False, lengthscale=1., variance=1.)
-        gp_Y = GPRegression(X=Z, Y=Y, kernel=kernel, noise_var=1.)
-        gp_Y.optimize()
-
-        num_features = X.shape[1]
-        kernel = RBF(num_features, ARD=False, lengthscale=1., variance=1.)
-        gp_Z = GPRegression(X=X, Y=Z, kernel=kernel)
-        gp_Z.optimize()
-        
         return OrderedDict([
             ('Y', gp_Y),
             ('Z', gp_Z),

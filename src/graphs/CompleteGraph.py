@@ -1,13 +1,13 @@
 from functools import partial
 from collections import OrderedDict
-from src.graphs import Graph
+from src.graphs import GraphInterface
 from src.utils_functions import fit_gaussian_process
-from .CompleteGraph_DoFunctions import *
+import numpy as np
 import sys
 sys.path.append("../..")
 
 
-class CompleteGraph(Graph):
+class CompleteGraph(GraphInterface):
     """
     An instance of the class graph giving the graph structure in the synthetic example 
     
@@ -15,59 +15,85 @@ class CompleteGraph(Graph):
     ----------
     """
 
-    def __init__(self, observational_samples):
+    def __init__(self, measurements):
 
         # Call the parent constructor
         super().__init__(['B', 'D', 'E'])
 
-        self.A = np.asarray(observational_samples['A'])[:, np.newaxis]
-        self.B = np.asarray(observational_samples['B'])[:, np.newaxis]
-        self.C = np.asarray(observational_samples['C'])[:, np.newaxis]
-        self.D = np.asarray(observational_samples['D'])[:, np.newaxis]
-        self.E = np.asarray(observational_samples['E'])[:, np.newaxis]
-        self.F = np.asarray(observational_samples['F'])[:, np.newaxis]
-        self.Y = np.asarray(observational_samples['Y'])[:, np.newaxis]
+        # The variable names
+        self.var_names = ['A', 'B', 'C', 'D', 'E', 'F', 'Y']
+
+        # The measurements made by the agents
+        self.measurements = {
+            var_name: np.asarray(measurements[var_name])[:, np.newaxis] for var_name in self.var_names
+        }
+
+        self.fit_dependencies = [
+            ["B"],
+            ["F"],
+            ["D", "C"],
+            ["B", "C"],
+            ["A", "C", "E"],
+            ["B", "C", "D"],
+            ["D", "E", "C", "A"],
+            ["B", "E", "C", "A"],
+            ["A", "B", "C", "D", "E"],
+            ["A", "B", "C", "D", "E", "F"],
+        ]
+
+        self.fit_parameters = [
+            [1., 1., 0.0001, False],
+            [1., 1., 10., False],
+            [1., 1., 1., False],
+            [1., 1., 1., False],
+            [1., 1., 10., False],
+            [1., 1., 1., False],
+            [1., 1., 10., False],
+            [1., 1., 10., False],
+            [1., 1., 10., False],
+            [1., 1., 10., False]
+        ]
 
     def define_sem(self):
 
         def fU1(epsilon, **kwargs):
-          return epsilon[0]
+            return epsilon[0]
 
         def fU2(epsilon, **kwargs):
-          return epsilon[1]
+            return epsilon[1]
 
         def fF(epsilon, **kwargs):
-          return epsilon[8]
+            return epsilon[8]
 
         def fA(epsilon, U1, F, **kwargs):
-          return F**2 + U1 + epsilon[2]
+            return F ** 2 + U1 + epsilon[2]
 
         def fB(epsilon, U2, **kwargs):
-          return U2 + epsilon[3]
+            return U2 + epsilon[3]
 
         def fC(epsilon, B, **kwargs):
-          return np.exp(-B) + epsilon[4]
+            return np.exp(-B) + epsilon[4]
 
         def fD(epsilon, C, **kwargs):
-          return np.exp(-C)/10. + epsilon[5]
+            return np.exp(-C) / 10. + epsilon[5]
 
         def fE(epsilon, A, C, **kwargs):
-          return np.cos(A) + C/10. + epsilon[6]
+            return np.cos(A) + C / 10. + epsilon[6]
 
         def fY(epsilon, D, E, U1, U2, **kwargs):
-          return np.cos(D) - D/5. + np.sin(E) - E/4. + U1 + np.exp(-U2) + epsilon[7]
+            return np.cos(D) - D / 5. + np.sin(E) - E / 4. + U1 + np.exp(-U2) + epsilon[7]
 
         graph = OrderedDict([
-              ('U1', fU1),
-              ('U2', fU2),
-              ('F', fF),
-              ('A', fA),
-              ('B', fB),
-              ('C', fC),
-              ('D', fD),
-              ('E', fE),
-              ('Y', fY),
-            ])
+            ('U1', fU1),
+            ('U2', fU2),
+            ('F', fF),
+            ('A', fA),
+            ('B', fB),
+            ('C', fC),
+            ('D', fD),
+            ('E', fE),
+            ('Y', fY),
+        ])
         return graph
 
     @staticmethod
@@ -77,67 +103,37 @@ class CompleteGraph(Graph):
         return MIS if set_name == "MIS" else POMIS
 
     def get_interventional_ranges(self):
-        min_intervention_e = -6
-        max_intervention_e = 3
-
-        min_intervention_b = -5
-        max_intervention_b = 4
-
-        min_intervention_d = -5
-        max_intervention_d = 5
-
-        min_intervention_f = -4
-        max_intervention_f = 4
-
-        dict_ranges = OrderedDict ([
-          ('E', [min_intervention_e, max_intervention_e]),
-          ('B', [min_intervention_b, max_intervention_b]),
-          ('D', [min_intervention_d, max_intervention_d]),
-          ('F', [min_intervention_f, max_intervention_f])
+        return OrderedDict([
+            ('E', [-6, 3]),
+            ('B', [-5, 4]),
+            ('D', [-5, 5]),
+            ('F', [-4, 4])
         ])
-        return dict_ranges
 
-    def fit_all_gaussian_processes(self):
-        functions = {}
-        inputs_list = [self.B, self.F, np.hstack((self.D,self.C)), np.hstack((self.B,self.C)), np.hstack((self.A,self.C,self.E)), np.hstack((self.B,self.C,self.D)), 
-                    np.hstack((self.D,self.E,self.C,self.A)),np.hstack((self.B,self.E,self.C,self.A)), np.hstack((self.A,self.B,self.C,self.D,self.E)), 
-                    np.hstack((self.A,self.B,self.C,self.D,self.E, self.F))]
-        output_list = [self.C, self.Y, self.Y, self.Y, self.Y, self.Y, self.Y, self.Y, self.Y, self.Y]
-        name_list = ['gp_C', 'gp_A', 'gp_D_C', 'gp_B_C', 'gp_A_C_E', 'gp_B_C_D', 'gp_D_E_C_A', 'gp_B_E_C_A', 'gp_A_B_C_D_E', 'gp_A_B_C_D_E_F']
-        parameter_list = [[1.,1.,0.0001, False], [1.,1.,10., False], [1.,1.,1., False], [1.,1.,1., False], [1.,1.,10., False], 
-                            [1.,1.,1., False], [1.,1.,10., False], [1.,1.,10., False], [1.,1.,10., False],[1.,1.,10., False]]
+    def fit_all_gaussian_processes(self, measurements=None):
+        # If no measurements provided as input, use the measurements in self
+        measurements = self.measurements if measurements is None else {
+            var_name: np.asarray(measurements[var_name])[:, np.newaxis]
+            for var_name, measurement in measurements.items()
+        }
 
-        # Fit all conditional models
-        for i in range(len(inputs_list)):
-            X = inputs_list[i]
-            Y = output_list[i]
-            functions[name_list[i]] = fit_gaussian_process(X, Y, parameter_list[i])
+        # For each variable in the graph, concatenate the measurements of all the variables it depends on
+        xs = [
+            np.hstack([self.measurements[var_name] for var_name in dependencies])
+            for dependencies in self.fit_dependencies
+        ]
 
-        return functions
+        # For each variable in the graph, retrieve the measurements of the target variable Y
+        outputs = [measurements["C"]] + [measurements["Y"]] * (len(xs) - 1)  # TODO is this an error? or should C be C?
 
-    def fit_all_gaussian_processes(self, observational_samples):
-        A = np.asarray(observational_samples['A'])[:,np.newaxis]
-        B = np.asarray(observational_samples['B'])[:,np.newaxis]
-        C = np.asarray(observational_samples['C'])[:,np.newaxis]
-        D = np.asarray(observational_samples['D'])[:,np.newaxis]
-        E = np.asarray(observational_samples['E'])[:,np.newaxis]
-        F = np.asarray(observational_samples['F'])[:,np.newaxis]
-        Y = np.asarray(observational_samples['Y'])[:,np.newaxis]
+        # Create the name of the Gaussian process corresponding to each variable in the graph
+        names = ["gp_" + "_".join(dependencies) for dependencies in self.fit_dependencies]
 
-        functions = {}
-        inputs_list = [B, np.hstack((A,C,E)), np.hstack((D,C)), np.hstack((B,C)), np.hstack((B,C,D)), 
-                    np.hstack((D,E,C,A)),np.hstack((B,E,C,A))]
-        output_list = [C, Y, Y, Y, Y, Y, Y, Y]
-        name_list = ['gp_C', 'gp_A_C_E', 'gp_D_C', 'gp_B_C', 'gp_B_C_D', 'gp_D_E_C_A', 'gp_B_E_C_A']
-        parameter_list = [[1.,1.,10., False], [1.,1.,10., False], [1.,1.,1., False], [1.,1.,10., False], [1.,1.,10., False], [1.,1.,10., False], [1.,1.,10., False]]
-
-        ## Fit all conditional models
-        for i in range(len(inputs_list)):
-            X = inputs_list[i]
-            Y = output_list[i]
-            functions[name_list[i]] = fit_gaussian_process(X, Y, parameter_list[i])
-  
-        return functions
+        # Fit all conditional Gaussian processes
+        return {
+            name: fit_gaussian_process(x, output, parameter)
+            for name, x, output, parameter in zip(names, xs, outputs, self.fit_parameters)
+        }
 
     def get_cost_structure(self, type_cost):
 
