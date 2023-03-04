@@ -1,3 +1,5 @@
+import os.path
+
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
 from .cost_functions import *
@@ -43,3 +45,7 @@ def fit_gaussian_process(x, y, parameter_list):
     gp.likelihood.variance.fix(1e-2)
     gp.optimize()
     return gp
+
+
+def is_valid_path(path):
+    return path is not None and os.path.exists(path)

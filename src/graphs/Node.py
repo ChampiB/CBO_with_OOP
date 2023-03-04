@@ -1,3 +1,7 @@
+from src.graphs.StructuralEquations import StringEquation
+import numpy as np
+
+
 class Node:
     def __init__(self, name, parents_name, children_name, equation, variable_cost, fixed_cost, min_intervention=None,
                  max_intervention=None, seed=0):
@@ -9,9 +13,9 @@ class Node:
         self._variable_cost = variable_cost
         self._min_intervention = min_intervention
         self._max_intervention = max_intervention
-        self._parents = []
-        self._children = []
-        self._value = None
+        self.parents = []
+        self.children = []
+        self.value = None
         self._seed = seed
 
     @property
@@ -26,33 +30,22 @@ class Node:
     def children_name(self):
         return self._children_name
 
-    @property
-    def parents(self):
-        return self._parents
-
-    @parents.setter
-    def parents(self, parents):
-        self.parents = parents
-
-    @property
-    def children(self):
-        return self._children
-
-    @children.setter
-    def children(self, children):
-        self.children = children
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        self._value = value
-
     def total_cost(self, interventions):
         return self._fixed_cost + self._variable_cost(interventions)
 
     def structural_equation(self):
-        parent_values = [p.value for p in self._parents]
-        self.value = self._equation(parent_values)
+        if isinstance(self._equation, StringEquation):
+            # We allow named parameters here so that the lambdas can use the node names as variable names
+            parent_values = {p.name: p.value for p in self.parents}
+            self.value = np.float64(self._equation.predict(**parent_values))
+        else:
+            parent_values = np.array([[p.value for p in self.parents]])
+            self.value = np.float64(self._equation.predict(parent_values))
+
+    def fit_equation(self, node_measurement=None, parents_measurements=None):
+        if parents_measurements is None:
+            self._equation.fit(node_measurement)
+        else:
+            # if both measurements are None, fit has no effect
+            self._equation.fit(parents_measurements, node_measurement)
+
