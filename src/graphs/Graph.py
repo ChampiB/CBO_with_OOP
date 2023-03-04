@@ -1,16 +1,15 @@
 from operator import itemgetter
 import pandas as pd
-from src.graphs import GraphInterface
 from src.utils_functions import is_valid_path
 import numpy as np
 
 
-class Graph(GraphInterface):
+class Graph:
 
     def __init__(self, nodes, observation_path, intervention_path, initial_num_obs_samples=100,
                  true_observation_path=None, seed=0):
         manipulative_variables = [n for n in nodes if n.min_intervention is not None]
-        super(Graph, self).__init__(manipulative_variables=manipulative_variables)
+        self._manipulative_variables = manipulative_variables
         self._nodes, self._nodes_map = self._preprocess_nodes(nodes)
         self._seed = seed
         # This replace DataLoader
@@ -25,6 +24,10 @@ class Graph(GraphInterface):
     @property
     def nodes_map(self):
         return self._nodes_map
+
+    @property
+    def manipulative_variables(self):
+        return self._manipulative_variables
 
     def fit_all_gaussian_processes(self):
         # TODO: implement this if still needed
