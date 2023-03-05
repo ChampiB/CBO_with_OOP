@@ -1,0 +1,15 @@
+name: "Complete"
+_target_: src.graphs.Graph.Graph
+nodes:
+   - complete/u1
+   - complete/u2
+   - complete/f
+   - complete/a
+   - complete/b
+   - complete/c
+   - complete/d
+   - complete/e
+   - complete/y
+obs_path: ${oc.env:DATA_PATH}/complete_graph/observations.pkl
+intervention_path: ${oc.env:DATA_PATH}/complete_graph/interventional_data.npy
+initial_num_obs_samples: 100

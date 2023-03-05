@@ -1,0 +1,13 @@
+_target_: src.graphs.Node.Node
+       name: "TE"
+       parent_name:
+         - L
+      children_name:
+        - C
+        - S
+        - P
+        - O
+        - CO
+        - Y
+       equation:
+         _target_: sklearn.linear_model.LinearRegression

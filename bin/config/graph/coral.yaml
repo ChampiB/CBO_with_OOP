@@ -1,0 +1,19 @@
+name: "Coral"
+
+_target_: src.graphs.Graph.Graph
+nodes:
+  - coral/te
+  - coral/c
+  - coral/l
+  - coral/s
+  - coral/o
+  - coral/p
+  - coral/d
+  - coral/t
+  - coral/co
+  - coral/n
+  - coral/y
+obs_path: ${oc.env:DATA_PATH}/coral_graph/observations.pkl
+true_obs_path: ${oc.env:DATA_PATH}/coral_graph/true_observations.pkl
+intervention_path: ${oc.env:DATA_PATH}/coral_graph/interventional_data.npy
+initial_num_obs_samples: 100

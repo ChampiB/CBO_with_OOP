@@ -1,0 +1,15 @@
+_target_: src.graphs.Node.Node
+       name: "T"
+       parent_name:
+         - S
+      children_name:
+        - P
+        - O
+        - CO
+       equation:
+         _target_: sklearn.linear_model.LinearRegression
+       # Fixed cost for type 2,3 is 5
+       fixed_cost: 1
+       variable_cost: False
+       min_intervention: 2450
+       max_invervention: 2500

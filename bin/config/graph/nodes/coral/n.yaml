@@ -1,0 +1,13 @@
+_target_: src.graphs.Node.Node
+  name: "N"
+  children_name:
+    - C
+    - Y
+    equation:
+      _target_: sklearn.mixture.GaussianMixture
+      n_components: 3
+    # Fixed cost for type 2,3 is also 1
+    fixed_cost: 1
+    variable_cost: False
+    min_intervention: -2
+    max_intervention: 5

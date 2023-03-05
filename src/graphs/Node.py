@@ -3,8 +3,8 @@ import numpy as np
 
 
 class Node:
-    def __init__(self, name, parents_name, children_name, equation, fixed_cost=1, variable_cost=False,
-                 min_intervention=None, max_intervention=None, seed=0):
+    def __init__(self, name, equation, parents_name=(), children_name=(), fixed_cost=0, variable_cost=False,  seed=0,
+                 min_intervention=None, max_intervention=None):
         """ Initialise the node of a Graph
 
         :param name: the name of the node

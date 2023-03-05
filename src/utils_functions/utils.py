@@ -1,5 +1,5 @@
 import os.path
-
+import matplotlib.pyplot as plt
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
 from .cost_functions import *
@@ -48,4 +48,25 @@ def fit_gaussian_process(x, y, parameter_list):
 
 
 def is_valid_path(path):
+    """ Check if a path exists
+
+    :param path: the path to check (can be None)
+    :return: True if the path is valid false otherwise
+    """
     return path is not None and os.path.exists(path)
+
+
+def save_figure(out_fname, dpi=300, tight=True):
+    """Save a matplotlib figure in an `out_fname` file.
+
+    :param out_fname:  Name of the file used to save the figure.
+    :param dpi: Number of dpi, Default 300.
+    :param tight: If True, use plt.tight_layout() before saving. Default True.
+    :return: None
+    """
+    if tight is True:
+        plt.tight_layout()
+    plt.savefig(out_fname, dpi=dpi, transparent=True)
+    plt.clf()
+    plt.cla()
+    plt.close()

@@ -1,20 +1,20 @@
 from operator import itemgetter
 import pandas as pd
-from src.utils_functions import is_valid_path
+from src.utils_functions import is_valid_path, save_figure
 import numpy as np
+import networkx as nx
 
 
 class Graph:
 
-    def __init__(self, nodes, observation_path, intervention_path, initial_num_obs_samples=100,
-                 true_observation_path=None, seed=0):
+    def __init__(self, nodes, obs_path, intervention_path, initial_num_obs_samples=100, seed=0, true_obs_path=None):
         manipulative_variables = [n for n in nodes if n.min_intervention is not None]
         self._manipulative_variables = manipulative_variables
         self._nodes, self._nodes_map = self._preprocess_nodes(nodes)
         self._seed = seed
         # This replace DataLoader
-        self._observations = pd.read_pickle(observation_path)[:initial_num_obs_samples]
-        self._true_observations = pd.read_pickle(true_observation_path) if is_valid_path(true_observation_path) else None
+        self._observations = pd.read_pickle(obs_path)[:initial_num_obs_samples]
+        self._true_observations = pd.read_pickle(true_obs_path) if is_valid_path(true_obs_path) else None
         self._interventions = np.load(intervention_path, allow_pickle=True)
 
     @property
@@ -29,11 +29,7 @@ class Graph:
     def manipulative_variables(self):
         return self._manipulative_variables
 
-    def fit_all_gaussian_processes(self):
-        # TODO: implement this if still needed
-        pass
-
-    def fit_all_gaussian_processes(self, observational_samples):
+    def fit_all_gaussian_processes(self, *args, **kwargs):
         # TODO: implement this if still needed
         pass
 
@@ -105,3 +101,10 @@ class Graph:
                 nodes.remove(node)
                 ordered_nodes.append(node)
                 ordered_nodes_names.append(node.name)
+
+    def show(self, fname):
+        graph = nx.DiGraph()
+        edges = [(n.name, c) for n in self.nodes for c in n.children]
+        graph.add_edges_from(edges)
+        nx.draw_networkx(graph, arrows=True)
+        save_figure(fname)
