@@ -1,6 +1,6 @@
 _target_: cbo.graphs.Node.Node
   name: "D"
-  parent_name:
+  parents_name:
     - S
   children_name:
     - P

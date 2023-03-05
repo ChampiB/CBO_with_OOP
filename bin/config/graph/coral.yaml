@@ -2,17 +2,17 @@ name: "Coral"
 
 _target_: cbo.graphs.Graph.Graph
 nodes:
-  - coral/te
-  - coral/c
-  - coral/l
-  - coral/s
-  - coral/o
-  - coral/p
-  - coral/d
-  - coral/t
-  - coral/co
-  - coral/n
-  - coral/y
+  - coral_te
+  - coral_c
+  - coral_l
+  - coral_s
+  - coral_o
+  - coral_p
+  - coral_d
+  - coral_t
+  - coral_co
+  - coral_n
+  - coral_y
 obs_path: ${oc.env:DATA_PATH}/coral_graph/observations.pkl
 true_obs_path: ${oc.env:DATA_PATH}/coral_graph/true_observations.pkl
 intervention_path: ${oc.env:DATA_PATH}/coral_graph/interventional_data.npy

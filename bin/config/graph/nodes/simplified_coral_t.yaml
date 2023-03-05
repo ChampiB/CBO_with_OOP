@@ -1,6 +1,6 @@
 _target_: cbo.graphs.Node.Node
        name: "T"
-       parent_name:
+       parents_name:
          - S
       children_name:
         - P
@@ -11,5 +11,5 @@ _target_: cbo.graphs.Node.Node
        # Fixed cost for type 2,3 is 5
        fixed_cost: 1
        variable_cost: False
-       min_intervention: 2450
-       max_invervention: 2500
+       min_intervention: 2300
+       max_invervention: 2400

@@ -1,0 +1,14 @@
+_target_: cbo.graphs.Node.Node
+name: "B"
+parents_name:
+  - "U2"
+children_name:
+  - "C"
+equation:
+  _target_: cbo.graphs.StructuralEquations.StringEquation
+  string_equation: "lambda epsilon, U2: U2 + epsilon"
+# fixed cost for type 2,3 is 10
+fixed_cost: 1
+variable_cost: False
+min_intervention: -5
+max_intervention: 4

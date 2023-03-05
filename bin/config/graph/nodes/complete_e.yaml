@@ -1,0 +1,15 @@
+_target_: cbo.graphs.Node.Node
+name: "E"
+parents_name:
+  - "A"
+  - "C"
+children_name:
+  - "Y"
+equation:
+  _target_: cbo.graphs.StructuralEquations.StringEquation
+  string_equation: "lambda epsilon, A, C: np.cos(A) + C / 10. + epsilon"
+# Fixed cost for type 2,3 is 20
+fixed_cost: 1
+variable_cost: False
+min_intervention: -6
+max_intervention: 3

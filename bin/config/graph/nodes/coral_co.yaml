@@ -1,6 +1,6 @@
 _target_: cbo.graphs.Node.Node
-  name: "O"
-  parent_name:
+  name: "CO"
+  parents_name:
     - S
     - T
     - D
@@ -9,8 +9,3 @@ _target_: cbo.graphs.Node.Node
     - Y
     equation:
       _target_: sklearn.linear_model.LinearRegression
-    # Fixed cost for type 2,3 is 10
-    fixed_cost: 1
-    variable_cost: False
-    min_internvention: 3
-    max_intervention: 4
