@@ -1,4 +1,4 @@
-_target_: src.graphs.Node.Node
+_target_: cbo.graphs.Node.Node
        name: "Y"
        parent_name:
          - L

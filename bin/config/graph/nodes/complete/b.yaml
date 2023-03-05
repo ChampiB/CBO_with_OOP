@@ -1,11 +1,11 @@
-_target_: src.graphs.Node.Node
+_target_: cbo.graphs.Node.Node
        name: "B"
        parent_name:
          - "U2"
        children_name:
          - "C"
        equation:
-         _target_: src.graphs.StructuralEquations.StringEquation
+         _target_: cbo.graphs.StructuralEquations.StringEquation
          string_equation: "lambda epsilon, U2: U2 + epsilon"
        # fixed cost for type 2,3 is 10
        fixed_cost: 1

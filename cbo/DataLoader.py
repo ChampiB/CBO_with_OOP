@@ -1,6 +1,6 @@
 import numpy as np
 import os.path
-from src.graphs import *
+from cbo.graphs import *
 import pandas as pd
 
 

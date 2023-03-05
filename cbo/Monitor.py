@@ -1,6 +1,6 @@
 import time
 from functools import partial
-from src.utils_functions import *
+from cbo.utils_functions import *
 import copy
 
 

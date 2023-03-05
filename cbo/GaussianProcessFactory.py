@@ -1,6 +1,6 @@
 from GPy.core import Mapping
 from emukit.model_wrappers import GPyModelWrapper
-from src.utils_functions.causal_kernels import CausalRBF
+from cbo.utils_functions.causal_kernels import CausalRBF
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
 from enum import IntEnum

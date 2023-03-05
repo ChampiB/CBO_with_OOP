@@ -1,8 +1,8 @@
-_target_: src.graphs.Node.Node
+_target_: cbo.graphs.Node.Node
        name: "L"
       children_name:
         - TE
         - C
         - Y
        equation:
-         _target_: src.graphs.StructuralEquation.Gamma
+         _target_: cbo.graphs.StructuralEquation.Gamma

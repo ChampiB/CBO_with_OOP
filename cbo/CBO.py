@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from src.DoCalculus import DoCalculus
-from src.Monitor import Monitor
-from src.utils_functions import *
+from cbo.DoCalculus import DoCalculus
+from cbo.Monitor import Monitor
+from cbo.utils_functions import *
 from numpy.random import uniform
-from src.GaussianProcessFactory import GaussianProcessFactory as GPFactory
-from src.GaussianProcessFactory import GaussianProcessType as GPType
+from cbo.GaussianProcessFactory import GaussianProcessFactory as GPFactory
+from cbo.GaussianProcessFactory import GaussianProcessType as GPType
 
 
 class CBO:

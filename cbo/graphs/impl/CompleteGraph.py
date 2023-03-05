@@ -1,15 +1,15 @@
 from functools import partial
 from collections import OrderedDict
-from src.graphs import GraphInterface
-from src.utils_functions import fit_gaussian_process
+from cbo.graphs import GraphInterface
 import numpy as np
-import sys
-sys.path.append("../../..")
+#import sys
+#sys.path.append("../../..")
+from cbo.utils_functions.utils import fit_gaussian_process
 
 
 class CompleteGraph(GraphInterface):
     """
-    An instance of the class graph giving the graph structure in the synthetic example 
+    An instance of the class graph giving the graph structure in the synthetic example
     
     Parameters
     ----------

@@ -1,4 +1,4 @@
-from src.graphs.StructuralEquations import StringEquation
+from cbo.graphs.StructuralEquations import StringEquation
 import numpy as np
 
 

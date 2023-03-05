@@ -1,6 +1,6 @@
-from src.CBO import *
-from src.ArgumentParser import ArgumentParser as ArgumentParser
-from src.DataLoader import DataLoader as DataLoader
+from cbo.CBO import *
+from cbo.ArgumentParser import ArgumentParser as ArgumentParser
+from cbo.DataLoader import DataLoader as DataLoader
 
 
 if __name__ == '__main__':

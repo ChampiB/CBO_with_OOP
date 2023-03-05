@@ -1,17 +1,19 @@
 from operator import itemgetter
 import pandas as pd
-from src.utils_functions import is_valid_path, save_figure
+from cbo.utils_functions.utils import is_valid_path, save_figure
 import numpy as np
 import networkx as nx
+import matplotlib.pyplot as plt
 
 
 class Graph:
 
-    def __init__(self, nodes, obs_path, intervention_path, initial_num_obs_samples=100, seed=0, true_obs_path=None):
+    def __init__(self, nodes, obs_path, intervention_path, name, initial_num_obs_samples=100, seed=0, true_obs_path=None):
         manipulative_variables = [n for n in nodes if n.min_intervention is not None]
         self._manipulative_variables = manipulative_variables
         self._nodes, self._nodes_map = self._preprocess_nodes(nodes)
         self._seed = seed
+        self._name = name
         # This replace DataLoader
         self._observations = pd.read_pickle(obs_path)[:initial_num_obs_samples]
         self._true_observations = pd.read_pickle(true_obs_path) if is_valid_path(true_obs_path) else None
@@ -20,6 +22,10 @@ class Graph:
     @property
     def nodes(self):
         return self._nodes
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def nodes_map(self):
@@ -102,9 +108,11 @@ class Graph:
                 ordered_nodes.append(node)
                 ordered_nodes_names.append(node.name)
 
-    def show(self, fname):
+    def show(self, fname, show=False):
         graph = nx.DiGraph()
         edges = [(n.name, c) for n in self.nodes for c in n.children]
         graph.add_edges_from(edges)
         nx.draw_networkx(graph, arrows=True)
+        if show:
+            plt.show()
         save_figure(fname)

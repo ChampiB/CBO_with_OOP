@@ -1,6 +1,6 @@
 name: "Coral"
 
-_target_: src.graphs.Graph.Graph
+_target_: cbo.graphs.Graph.Graph
 nodes:
   - coral/te
   - coral/c

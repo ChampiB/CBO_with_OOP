@@ -1,10 +1,10 @@
 from functools import partial
-from src.graphs import GraphInterface
+from cbo.graphs import GraphInterface
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
-from src.graphs.ToyGraph_DoFunctions import *
-import sys
-sys.path.append("../../..")
+from cbo.graphs.ToyGraph_DoFunctions import *
+#import sys
+#sys.path.append("../../..")
 
 
 class ToyGraph(GraphInterface):

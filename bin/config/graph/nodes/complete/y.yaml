@@ -1,4 +1,4 @@
- _target_: src.graphs.Node.Node
+ _target_: cbo.graphs.Node.Node
      name: "Y"
      parent_name:
        - "D"
@@ -6,5 +6,5 @@
        - "U1"
        - "U2"
      equation:
-       _target_: src.graphs.StructuralEquations.StringEquation
+       _target_: cbo.graphs.StructuralEquations.StringEquation
        string_equation: "lambda epsilon, D, E, U1, U2: np.cos(D) - D / 5. + np.sin(E) - E / 4. + U1 + np.exp(-U2) + epsilon"

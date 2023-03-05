@@ -2,9 +2,11 @@ import os.path
 import matplotlib.pyplot as plt
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
-from .cost_functions import *
-from .causal_acquisition_functions import CausalExpectedImprovement
-from .causal_optimizer import CausalGradientAcquisitionOptimizer
+import numpy as np
+
+from cbo.utils_functions.causal_acquisition_functions import CausalExpectedImprovement
+from cbo.utils_functions.causal_optimizer import CausalGradientAcquisitionOptimizer
+from cbo.utils_functions.cost_functions import Cost
 
 
 def find_current_global(current_y, dict_interventions, task):

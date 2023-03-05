@@ -13,8 +13,8 @@ hydra:
   run:
     dir: ${oc.env:XP_PATH}/${hydra.job.name}/${graph.name}
   sweep:
-    dir: ${oc.env:XP_PATH}/${hydra.job.name}/${graph.name}
-    subdir: ${seed}
+    dir: ${oc.env:XP_PATH}/${hydra.job.name}
+    subdir: ${graph.name}
   job:
     config:
       override_dirname:

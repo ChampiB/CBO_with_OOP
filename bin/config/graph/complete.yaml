@@ -1,15 +1,18 @@
+defaults:
+   - _self_
+
 name: "Complete"
-_target_: src.graphs.Graph.Graph
+_target_: cbo.graphs.Graph.Graph
 nodes:
-   - complete/u1
-   - complete/u2
-   - complete/f
-   - complete/a
-   - complete/b
-   - complete/c
-   - complete/d
-   - complete/e
-   - complete/y
+   - graph_nodes/complete/u1
+   - graph_nodes/complete/u2
+   - graph_nodes/complete/f
+   - graph_nodes/complete/a
+   - graph_nodes/complete/b
+   - graph_nodes/complete/c
+   - graph_nodes/complete/d
+   - graph_nodes/complete/e
+   - graph_nodes/complete/y
 obs_path: ${oc.env:DATA_PATH}/complete_graph/observations.pkl
 intervention_path: ${oc.env:DATA_PATH}/complete_graph/interventional_data.npy
 initial_num_obs_samples: 100
