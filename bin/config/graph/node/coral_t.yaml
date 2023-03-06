@@ -1,0 +1,16 @@
+T:
+  _target_: cbo.graphs.Node.Node
+  name: "T"
+  parents_name:
+    - S
+  children_name:
+    - P
+    - O
+    - CO
+  equation:
+    _target_: sklearn.linear_model.LinearRegression
+  # Fixed cost for type 2,3 is 5
+  fixed_cost: 1
+  variable_cost: False
+  min_intervention: 2450
+  max_intervention: 2500

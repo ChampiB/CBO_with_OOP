@@ -5,7 +5,7 @@ intervention_path: ${oc.env:DATA_PATH}/complete_graph/interventional_data.npy
 initial_num_obs_samples: 100
 
 defaults:
-   - nodes:
+   - node@nodes:
         - complete_u1
         - complete_u2
         - complete_f

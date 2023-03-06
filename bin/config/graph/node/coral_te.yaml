@@ -1,0 +1,14 @@
+TE:
+  _target_: cbo.graphs.Node.Node
+  name: "TE"
+  parents_name:
+    - L
+  children_name:
+    - C
+    - S
+    - P
+    - O
+    - CO
+    - Y
+  equation:
+    _target_: sklearn.linear_model.LinearRegression

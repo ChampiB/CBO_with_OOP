@@ -2,7 +2,6 @@ import logging
 import hydra
 from omegaconf import OmegaConf
 from hydra.utils import instantiate
-
 logger = logging.getLogger("test_graph")
 
 

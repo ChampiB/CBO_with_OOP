@@ -1,5 +1,8 @@
 import abc
+
+import sklearn.mixture as sm
 from scipy.stats import gamma
+from cbo.graphs import logger
 
 
 class StructuralEquationInterface:
@@ -22,11 +25,23 @@ class Gamma(StructuralEquationInterface):
         super(Gamma, self).__init__(gamma)
 
     def fit(self, *args, **kwargs):
-        a, loc, scale = self._equation.fit(args[0])
+        a, loc, scale = self._equation.fit(args[0][0])
         self._equation = self._equation(a=a, loc=loc, scale=scale)
 
     def predict(self, *args, **kwargs):
         return self._equation.rvs(1)[0]
+
+
+class GaussianMixture(StructuralEquationInterface):
+    def __init__(self, n_components=3):
+        super(GaussianMixture, self).__init__(sm.GaussianMixture(n_components=n_components))
+
+    def fit(self, *args, **kwargs):
+        logger.info(args)
+        self._equation.fit(args[0][0].reshape(-1, 1))
+
+    def predict(self, *args, **kwargs):
+        return self._equation.sample(1)[0][0][0]
 
 
 class StringEquation(StructuralEquationInterface):

@@ -42,6 +42,14 @@ class Node:
     def children_name(self):
         return self._children_name
 
+    @property
+    def min_intervention(self):
+        return self._min_intervention
+
+    @property
+    def max_intervention(self):
+        return self._max_intervention
+
     def total_cost(self, interventions):
         """ Compute the total cost of the interventions on the node
 

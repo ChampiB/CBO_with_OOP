@@ -1,7 +1,0 @@
-_target_: cbo.graphs.Node.Node
-name: "U1"
-children_name:
-  - "A"
-equation:
-  _target_: cbo.graphs.StructuralEquations.StringEquation
-  string_equation: "lambda epsilon: epsilon"

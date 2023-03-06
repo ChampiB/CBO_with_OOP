@@ -1,0 +1,9 @@
+L:
+  _target_: cbo.graphs.Node.Node
+  name: "L"
+  children_name:
+  - TE
+  - C
+  - Y
+  equation:
+   _target_: cbo.graphs.StructuralEquations.Gamma

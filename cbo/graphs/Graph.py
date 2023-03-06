@@ -1,5 +1,8 @@
 from operator import itemgetter
 import pandas as pd
+from omegaconf import DictConfig
+
+from cbo.graphs import logger
 from cbo.utils_functions.utils import is_valid_path, save_figure
 import numpy as np
 import networkx as nx
@@ -9,15 +12,18 @@ import matplotlib.pyplot as plt
 class Graph:
 
     def __init__(self, nodes, obs_path, intervention_path, name, initial_num_obs_samples=100, seed=0, true_obs_path=None):
-        manipulative_variables = [n for n in nodes if n.min_intervention is not None]
-        self._manipulative_variables = manipulative_variables
-        self._nodes, self._nodes_map = self._preprocess_nodes(nodes)
-        self._seed = seed
-        self._name = name
         # This replace DataLoader
         self._observations = pd.read_pickle(obs_path)[:initial_num_obs_samples]
         self._true_observations = pd.read_pickle(true_obs_path) if is_valid_path(true_obs_path) else None
         self._interventions = np.load(intervention_path, allow_pickle=True)
+        self._seed = seed
+        self._name = name
+        # This is not ideal but is hydra cannot handle list of configs for now so this is a workaround
+        if isinstance(nodes, DictConfig):
+            nodes = list(nodes.values())
+        manipulative_variables = [n for n in nodes if n.min_intervention is not None]
+        self._manipulative_variables = manipulative_variables
+        self._nodes, self._nodes_map = self._preprocess_nodes(nodes)
 
     @property
     def nodes(self):
@@ -68,15 +74,22 @@ class Graph:
         """
         ordered_nodes = []
         ordered_nodes_names = []
+        nodes_map = {n.name: i for i, n in enumerate(nodes)}
 
         for node in nodes:
-            node.parents = itemgetter(node.parents_name)
-            node.children = itemgetter(node.children_name)
+            logger.debug("Getting the parents of node {}".format(node.name))
+            node.parents = [nodes[nodes_map[p]] for p in node.parents_name]
+            logger.debug("node.parents = {}".format(node.parents))
+            logger.debug("Getting the children of node {}".format(node.name))
+            node.children = [nodes[nodes_map[c]] for c in node.children_name]
+            logger.debug("node.children = {}".format(node.children))
+            logger.debug("Fitting structural equation of node {}".format(node.name))
             self._fit_equation(node)
 
         while nodes:
             self._sort_nodes(nodes, ordered_nodes, ordered_nodes_names)
-        node_map = {n: i for n, i in enumerate(ordered_nodes_names)}
+            logger.debug("ordered nodes={}".format(ordered_nodes_names))
+        node_map = {n: i for i, n in enumerate(ordered_nodes_names)}
 
         return ordered_nodes, node_map
 
@@ -88,8 +101,8 @@ class Graph:
         """
         if self._true_observations is None:
             return
-        node_values = self._true_observations[node.name]
-        parents_values = np.hstack([self._true_observations[p.name] for p in node.parents]) if node.parents else None
+        node_values = np.ones((1, 1)) * np.array(self._true_observations[node.name])
+        parents_values = np.ones((1, 1)) * np.hstack([self._true_observations[p.name] for p in node.parents]) if node.parents else None
         node.fit_equation(node_measurement=node_values, parents_measurements=parents_values)
 
     @staticmethod
@@ -110,7 +123,7 @@ class Graph:
 
     def show(self, fname, show=False):
         graph = nx.DiGraph()
-        edges = [(n.name, c) for n in self.nodes for c in n.children]
+        edges = [(n.name, c.name) for n in self.nodes for c in n.children if n.children]
         graph.add_edges_from(edges)
         nx.draw_networkx(graph, arrows=True)
         if show:
