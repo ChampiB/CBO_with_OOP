@@ -1,6 +1,8 @@
 import numpy as np
 import os.path
-from cbo.graphs import *
+from cbo.graphs.impl.CompleteGraph import CompleteGraph
+from cbo.graphs.impl.CoralGraph import CoralGraph
+from cbo.graphs.impl.SimplifiedCoralGraph import SimplifiedCoralGraph
 import pandas as pd
 
 
@@ -27,7 +29,6 @@ class DataLoader:
 
         # The list a supported graphs
         graph_classes = {
-            'toy_graph': ToyGraph,
             'complete_graph': CompleteGraph,
             'coral_graph': CoralGraph,
             'simplified_coral_graph': SimplifiedCoralGraph

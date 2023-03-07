@@ -1,9 +1,7 @@
 from functools import partial
 from collections import OrderedDict
-from cbo.graphs import GraphInterface
+from cbo.graphs.GraphInterface import GraphInterface
 import numpy as np
-#import sys
-#sys.path.append("../../..")
 from cbo.utils_functions.utils import fit_gaussian_process
 
 

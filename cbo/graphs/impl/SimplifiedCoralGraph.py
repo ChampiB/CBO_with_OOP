@@ -3,11 +3,9 @@ from collections import OrderedDict
 import scipy
 from sklearn.linear_model import LinearRegression
 import sklearn.mixture
-from cbo.graphs import GraphInterface
+from cbo.graphs.GraphInterface import GraphInterface
 import copy
 import numpy as np
-#import sys
-#sys.path.append("../../..")
 from cbo.utils_functions.utils import fit_gaussian_process
 
 

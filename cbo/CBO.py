@@ -1,8 +1,9 @@
 from pathlib import Path
-
 from cbo.DoCalculus import DoCalculus
 from cbo.Monitor import Monitor
-from cbo.utils_functions import *
+from cbo.utils_functions.cbo_functions import *
+from cbo.utils_functions.utils import *
+from cbo.utils_functions.cost_functions import *
 from numpy.random import uniform
 from cbo.GaussianProcessFactory import GaussianProcessFactory as GPFactory
 from cbo.GaussianProcessFactory import GaussianProcessType as GPType
@@ -28,7 +29,7 @@ class CBO:
 		self.interventions = data.interventions
 
 		# Store useful arguments.
-		self.exploration_set = data.graph.get_exploration_set(args.exploration_set)
+		self.exploration_set = self.graph.get_exploration_set(args.exploration_set)
 		self.es_size = len(self.exploration_set)
 		self.num_interventions = args.num_interventions
 		self.max_n = args.initial_num_obs_samples + 50

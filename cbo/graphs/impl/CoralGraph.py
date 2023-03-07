@@ -5,9 +5,7 @@ from scipy.stats import gamma
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.mixture import GaussianMixture
-from cbo.graphs import GraphInterface
-#import sys
-#sys.path.append("../../..")
+from cbo.graphs.GraphInterface import GraphInterface
 from cbo.utils_functions.utils import fit_gaussian_process
 
 
