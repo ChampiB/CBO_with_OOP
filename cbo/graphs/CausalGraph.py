@@ -24,6 +24,8 @@ class CausalGraph:
         :param n_initial_samples: the initial number of observations the causal graph has access to
         """
 
+        # TODO add exploration set algorithm to hydra configuration, i.e., POMIS vs MIS
+
         # The networkx graph corresponding to the causal graph
         self._nodes = nodes
         self._edges = self._get_edges()
@@ -241,16 +243,21 @@ class CausalGraph:
         Getter
         :return: a dictionary whose keys are the nodes name and the values are corresponding c-components
         """
-        # TODO refacto code below
+
+        # Collect the c-components of all the graph's nodes
         c_components = []
-        remain = set(self.nodes)
-        found = set()
-        while remain:
-            node = next(iter(remain))
+        remaining_nodes = set(self.nodes)
+        found_nodes = set()
+        while remaining_nodes:
+
+            # Remove a random element from the set of all remaining nodes, and find its c-component
+            node = remaining_nodes.pop()
             c_component = self._get_c_component(node)
             c_components.append(c_component)
-            found |= c_component
-            remain -= found
+
+            # Update the sets of found and remaining nodes
+            found_nodes |= c_component
+            remaining_nodes -= found_nodes
 
         # Collect the c-component of each node
         return {node.name: c_components[node.name] for node in self.nodes}
