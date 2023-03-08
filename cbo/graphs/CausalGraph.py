@@ -24,14 +24,6 @@ class CausalGraph:
         :param n_initial_samples: the initial number of observations the causal graph has access to
         """
 
-        # TODO cache the ancestors, descendants, c-components and confounded variables for faster access
-        # TODO for now the caches below are unused
-        # Create the caches for the ancestors, descendants, c-components and confounded variables
-        self.ancestors_cache = {}
-        self.descendants_cache = {}
-        self.c_components_cache = {}
-        self.confounded_cache = {}
-
         # The networkx graph corresponding to the causal graph
         self._nodes = nodes
         self._edges = self._get_edges()
@@ -58,6 +50,22 @@ class CausalGraph:
         self._preprocess_nodes()
         self._nodes_map = self._get_node_map()
         self._manipulative_variables = [node for node in nodes if node.min_intervention is not None]
+
+        # Create an empty list of bi-directed edges
+        self.bi_directed_edges = []
+        # TODO add support for bi_directed_edges and unobserved confounders
+        # TODO bi-directed edges are 3-tuples of the form (x:Node, y:Node, u:confounder_name -> a string)
+        # TODO update comment above self.bi_directed_edges
+
+        # Create the caches for the ancestors, descendants, c-components and confounded variables
+        self.ancestors_cache = {}
+        self.descendants_cache = {}
+        self.confounded_vars_cache = self._get_confounded_variables()
+        self.c_components_cache = self._get_c_components()
+
+        # TODO cache the ancestors and descendants variables for faster access (using a cache decorator?)
+        # TODO |=> for now these caches below are unused
+        # TODO all 4 caches should also be transferred when self.__getitem__ and self.do are called
 
     def __getitem__(self, nodes):
         """
@@ -149,7 +157,7 @@ class CausalGraph:
         """
         Getter
         :params nodes: the nodes whose parents should be returned
-        :return: the node's parents
+        :return: the nodes' parents
         """
 
         # Turns single node into a list of size one
@@ -167,7 +175,7 @@ class CausalGraph:
         """
         Getter
         :params nodes: the nodes whose children should be returned
-        :return: the node's children
+        :return: the nodes' children
         """
 
         # Turns single node into a list of size one
@@ -186,7 +194,7 @@ class CausalGraph:
         Getter
         :params nodes: the nodes whose ancestors should be returned
         :params ancestors: the current list of ancestors
-        :return: the node's ancestors
+        :return: the nodes' ancestors
         """
 
         # Turns single node into a list of size one
@@ -210,7 +218,7 @@ class CausalGraph:
         Getter
         :params nodes: the nodes whose descendants should be returned
         :params descendants: the current list of descendants
-        :return: the node's descendants
+        :return: the nodes' descendants
         """
 
         # Turns single node into a list of size one
@@ -227,6 +235,89 @@ class CausalGraph:
                     de.append(child)
                     de += CausalGraph.descendants(child, descendants=de)
         return de
+
+    def _get_c_components(self):
+        """
+        Getter
+        :return: a dictionary whose keys are the nodes name and the values are corresponding c-components
+        """
+        # TODO refacto code below
+        c_components = []
+        remain = set(self.nodes)
+        found = set()
+        while remain:
+            node = next(iter(remain))
+            c_component = self._get_c_component(node)
+            c_components.append(c_component)
+            found |= c_component
+            remain -= found
+
+        # Collect the c-component of each node
+        return {node.name: c_components[node.name] for node in self.nodes}
+
+    def _get_c_component(self, node):
+        """
+        Getter
+        :param node: the node whose c-component needs to be returned
+        :return: the c-component of the node passed as parameters
+        """
+        c_component = set()
+        nodes = [node]
+        while nodes:
+            next_node = nodes.pop()
+            c_component.add(next_node)
+            nodes += set(self.confounded_vars_cache[next_node]) - c_component
+        return c_component
+
+    def _get_confounded_variables(self):
+        """
+        Getter
+        :return: a dictionary whose keys are the nodes name and the values are corresponding lists of confounded nodes
+        """
+
+        # Create the list of confounded variables associated to all bi-directed edges in the graph
+        confounded_vars = {}
+        for x, y, u in self.bi_directed_edges:
+
+            # Add y as a confounded variable of x, if not done already
+            self._safe_add(confounded_vars, x.name, y)
+
+            # Add x as a confounded variable of y, if not done already
+            self._safe_add(confounded_vars, y.name, x)
+
+        # Create an empty list for each variable that is not confounded with any other variables
+        for node in self.nodes:
+            if node.name not in confounded_vars.keys():
+                confounded_vars[node.name] = []
+
+        return confounded_vars
+
+    @staticmethod
+    def _safe_add(dictionary, key, new_node):
+        """
+        Add a new node to the list of nodes corresponding to the key passed as parameters
+        :param dictionary: the dictionary whose keys are nodes name and values are the corresponding list of nodes
+        :param key: the key for which a new node needs to be added
+        :param new_node: the new node to add to the list of nodes corresponding to the key
+        """
+        if key not in dictionary.keys():
+            dictionary[key] = [new_node]
+        elif new_node not in dictionary[key]:
+            dictionary[key].append(new_node)
+
+    def c_component(self, nodes):
+        """
+        Getter
+        :params nodes: the nodes whose c-component should be returned
+        :return: the nodes' c-component
+        """
+
+        # Turns single node into a list of size one
+        if not isinstance(nodes, list):
+            nodes = [nodes]
+
+        # Create the union of the nodes' c-components
+        return set.union(*[self.c_components_cache[node.name] for node in nodes])
 
     @property
     def name(self):
