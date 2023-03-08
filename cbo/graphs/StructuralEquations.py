@@ -1,5 +1,4 @@
 import abc
-
 import sklearn.mixture as sm
 from scipy.stats import gamma
 from cbo.graphs import logger

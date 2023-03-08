@@ -6,7 +6,7 @@ from cbo.graphs.impl.SimplifiedCoralGraph import SimplifiedCoralGraph
 import pandas as pd
 
 
-class DataLoader:
+class DataLoader:  # TODO remove
     """
     A class used to load the measurement and causal graph of an experiment.
     """

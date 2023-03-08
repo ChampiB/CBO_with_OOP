@@ -20,8 +20,8 @@ class Node:
         :param seed: seed of the node
         """
         self._name = name
-        self._parents_name = parents_name
-        self._children_name = children_name
+        self.parents_name = parents_name
+        self.children_name = children_name
         self._equation = equation
         self._fixed_cost = fixed_cost
         self._variable_cost = variable_cost
@@ -30,19 +30,10 @@ class Node:
         self.parents = []
         self.children = []
         self.value = None
-        self._seed = seed
 
     @property
     def name(self):
         return self._name
-
-    @property
-    def parents_name(self):
-        return self._parents_name
-
-    @property
-    def children_name(self):
-        return self._children_name
 
     @property
     def min_intervention(self):
@@ -53,8 +44,8 @@ class Node:
         return self._max_intervention
 
     def total_cost(self, interventions):
-        """ Compute the total cost of the interventions on the node
-
+        """
+        Compute the total cost of the interventions on the node
         :param interventions: the intervention values
         :return: the computed cost
         """
@@ -64,8 +55,8 @@ class Node:
         return cost
 
     def structural_equation(self):
-        """Update the value of the node during sampling
-
+        """
+        Update the value of the node during sampling
         :return: None
         """
         if isinstance(self._equation, StringEquation):

@@ -1,9 +1,9 @@
-_target_: cbo.graphs.Graph.Graph
+_target_: cbo.graphs.CausalGraph.CausalGraph
 name: "Coral"
 obs_path: ${oc.env:DATA_PATH}/coral_graph/observations.pkl
 true_obs_path: ${oc.env:DATA_PATH}/coral_graph/true_observations.pkl
-intervention_path: ${oc.env:DATA_PATH}/coral_graph/interventional_data.npy
-initial_num_obs_samples: 100
+interventions_path: ${oc.env:DATA_PATH}/coral_graph/interventional_data.npy
+n_initial_samples: 100
 
 defaults:
    - node@nodes:
