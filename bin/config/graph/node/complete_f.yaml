@@ -10,3 +10,4 @@ F:
   variable_cost: "${set_variable_cost: ${cost_type}}"
   min_intervention: -4
   max_intervention: 4
+  is_reward_var: False

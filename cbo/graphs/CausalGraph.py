@@ -5,6 +5,7 @@ from cbo.utils_functions.utils import is_valid_path, save_figure
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+from cbo.algorithms.MIS import MIS
 
 
 class CausalGraph:
@@ -23,16 +24,12 @@ class CausalGraph:
         :param n_initial_samples: the initial number of observations the causal graph has access to
         """
 
-        # TODO add exploration set algorithm to hydra configuration, i.e., POMIS vs MIS
-
         # The networkx graph corresponding to the causal graph
         self._nodes = nodes
+        self._nodes_name = [node.name for node in self._nodes]
         self._edges = self._get_edges()
         self._graph = nx.DiGraph(self._edges)
-        # TODO: check that this should be removed
-        # add_nodes_from is adding Node instances in addition to node names, is this intended?
-        # The topological sort will not work with this new graph
-        # self._graph.add_nodes_from(self._nodes)
+        self._graph.add_nodes_from(self._nodes_name)
 
         # Store the paths of the files containing the measurements and interventions
         self.interventions_path = interventions_path
@@ -53,7 +50,7 @@ class CausalGraph:
         # Pre-process the nodes and retrieve the nodes map as well as the manipulative variables
         self._preprocess_nodes()
         self._nodes_map = self._get_node_map()
-        self._manipulative_variables = [node for node in nodes if node.min_intervention is not None]
+        self._manipulative_variables = [node for node in self._nodes if node.min_intervention is not None]
 
         # Create an empty list of bi-directed edges
         self.bi_directed_edges = []
@@ -66,10 +63,13 @@ class CausalGraph:
         self.descendants_cache = {}
         self.confounded_vars_cache = self._get_confounded_variables()
         self.c_components_cache = self._get_c_components()
-
         # TODO cache the ancestors and descendants variables for faster access (using a cache decorator?)
         # TODO |=> for now these caches below are unused
         # TODO all 4 caches should also be transferred when self.__getitem__ and self.do are called
+
+        # Retrieve the reward variables and the exploration set for the graph
+        self.exploration_set = MIS(self).run(self.reward_variables)
+        # TODO add exploration set algorithm to hydra configuration, i.e., POMIS vs MIS
 
     def __getitem__(self, nodes):
         """
@@ -201,6 +201,10 @@ class CausalGraph:
         :return: the nodes' ancestors
         """
 
+        # Make sure the ancestors are stored in a list
+        if ancestors is None:
+            ancestors = []
+
         # Turns single node into a list of size one
         if not isinstance(nodes, list):
             nodes = [nodes]
@@ -213,7 +217,8 @@ class CausalGraph:
                 # Add the parent and its ancestors to the list of ancestors, if not already added
                 if parent not in ancestors:
                     an.append(parent)
-                    an += CausalGraph.ancestors(parent, ancestors=an)
+                    ancestors.append(parent)
+                    an += CausalGraph.ancestors(parent, ancestors=ancestors)
         return an
 
     @staticmethod
@@ -245,14 +250,8 @@ class CausalGraph:
         Getter
         :return: a dictionary whose keys are the nodes name and the values are corresponding c-components
         """
-        # TODO: c_components was initialised as a list but used as a dict in the return, causing a crash during init
-        # I guess it was meant to be a dict instead of a list so I have updated it. Could you check that this method
-        # is still doing what is intended? I have commented the old version to help you check this, please remove it
-        # if everything is fine with the dict version.
-
         # Collect the c-components of all the graph's nodes
-        #c_components = []
-        c_components = {}
+        c_components = []
         remaining_nodes = set(self.nodes)
         found_nodes = set()
         while remaining_nodes:
@@ -260,16 +259,14 @@ class CausalGraph:
             # Remove a random element from the set of all remaining nodes, and find its c-component
             node = remaining_nodes.pop()
             c_component = self._get_c_component(node)
-            c_components.update({node.name: c_component})
-            #c_components.append(c_component)
+            c_components.append(c_component)
 
             # Update the sets of found and remaining nodes
             found_nodes |= c_component
             remaining_nodes -= found_nodes
 
         # Collect the c-component of each node
-        #return {node.name: c_components[node.name] for node in self.nodes}
-        return c_components
+        return {node.name: c_component for c_component in c_components for node in c_component}
 
     def _get_c_component(self, node):
         """
@@ -375,6 +372,14 @@ class CausalGraph:
         """
         return self._manipulative_variables
 
+    @property
+    def reward_variables(self):
+        """
+        Getter
+        :return: the reward variables of the graph
+        """
+        return [node for node in self._nodes if node.is_reward()]
+
     def _get_edges(self):
         """
         Collect all the edges corresponding to the graph's nodes, i.e., self.nodes
@@ -410,10 +415,11 @@ class CausalGraph:
 
         # Perform a topological sort on the graph's nodes
         nodes_name = self.topological_sort()
+        logger.debug(nodes_name)
         self._nodes = [nodes_map[node_name] for node_name in nodes_name]
 
     @staticmethod
-    def _all_nodes_in_set(nodes, target_set):  # TODO remove this? as "only" in MIS may be graph.nodes.name
+    def only(nodes, target_set):
         """
         Returns all the nodes that are in the target set
         :param nodes: the nodes that needs to be checked

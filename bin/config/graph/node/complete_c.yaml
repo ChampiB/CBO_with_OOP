@@ -11,3 +11,4 @@ C:
     string_equation: "lambda epsilon, B: np.exp(-B) + epsilon"
   fixed_cost: "${set_cost_value: ${cost_type}, 2}"
   variable_cost: "${set_variable_cost: ${cost_type}}"
+  is_reward_var: False

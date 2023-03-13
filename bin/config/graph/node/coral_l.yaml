@@ -6,4 +6,5 @@ L:
   - C
   - Y
   equation:
-   _target_: cbo.graphs.StructuralEquations.Gamma
+    _target_: cbo.graphs.StructuralEquations.Gamma
+  is_reward_var: False

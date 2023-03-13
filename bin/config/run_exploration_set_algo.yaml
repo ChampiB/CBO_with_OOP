@@ -1,0 +1,27 @@
+# This is a simple helper to run an exploration set algorithm
+# TODO: graph config should be improved with custom omegaconf resolvers for cost type:
+# https://omegaconf.readthedocs.io/en/2.2_branch/custom_resolvers.html
+# I will work on this next week
+
+variable_cost: False
+
+defaults:
+  - _self_
+  - graph: complete
+  - algorithm: pomis
+
+
+save_file: ${graph.name}_graph_variable_cost_${variable_cost}.pdf
+
+
+hydra:
+  run:
+    dir: ${oc.env:XP_PATH}/${hydra.job.name}/${graph.name}
+  sweep:
+    dir: ${oc.env:XP_PATH}/${hydra.job.name}
+    subdir: ${graph.name}
+  job:
+    config:
+      override_dirname:
+        kv_sep: _
+        item_sep: /

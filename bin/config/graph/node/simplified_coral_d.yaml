@@ -13,3 +13,4 @@ D:
   variable_cost: "${set_variable_cost: ${cost_type}}"
   min_intervention: 2000
   max_intervention: 2080
+  is_reward_var: False
