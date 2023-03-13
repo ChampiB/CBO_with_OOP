@@ -7,7 +7,7 @@ graph:
     nodes: "${get_values: ${graph.nodes_dict}}"
 
 defaults:
-  - node@nodes:
+  - node@nodes_dict:
       - coral_te
       - simplified_coral_c
       - coral_l
