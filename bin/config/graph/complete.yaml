@@ -1,11 +1,13 @@
-name: "Complete"
-_target_: cbo.graphs.CausalGraph.CausalGraph
-obs_path: ${oc.env:DATA_PATH}/complete_graph/observations.pkl
-interventions_path: ${oc.env:DATA_PATH}/complete_graph/interventional_data.npy
-n_initial_samples: 100  # TODO this is duplicated over all graphs may be better to put that in the CBO config
+graph:
+     _target_: cbo.graphs.CausalGraph.CausalGraph
+     obs_path: ${oc.env:DATA_PATH}/complete_graph/observations.pkl
+     interventions_path: ${oc.env:DATA_PATH}/complete_graph/interventional_data.npy
+     n_initial_samples: ${n_initial_samples}
+     name: "Complete"
+     nodes: "${get_values: ${graph.nodes_dict}}"
 
 defaults:
-   - node@nodes:
+   - node@nodes_dict:
         - complete_u1
         - complete_u2
         - complete_f

@@ -1,17 +1,18 @@
 import logging
 import hydra
 # Do not remove this import, it loads the omega conf resolvers
-# I put them there to avoid copy/pasting resolvers everywhere
+# I put them in the __init__ of cbo to avoid copy/pasting resolvers everywhere
 import cbo
 from omegaconf import OmegaConf
 from hydra.utils import instantiate
 logger = logging.getLogger("test_graph")
 
+
 @hydra.main(config_path="config", config_name="test_graph")
 def test_graph(cfg):
     logger.info("Graph config:\n{}".format(OmegaConf.to_yaml(cfg)))
-    graph = instantiate(cfg.graph)
-    graph.save_drawing(cfg.save_file, show=True)
+    graph = instantiate(cfg.graph.graph)
+    graph.save_drawing(cfg.save_file, show=cfg.show)
 
 
 if __name__ == "__main__":

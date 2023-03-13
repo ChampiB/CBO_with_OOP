@@ -1,6 +1,5 @@
 import copy
 import pandas as pd
-from omegaconf import DictConfig
 from cbo.graphs import logger
 from cbo.utils_functions.utils import is_valid_path, save_figure
 import numpy as np
@@ -30,7 +29,10 @@ class CausalGraph:
         self._nodes = nodes
         self._edges = self._get_edges()
         self._graph = nx.DiGraph(self._edges)
-        self._graph.add_nodes_from(self._nodes)
+        # TODO: check that this should be removed
+        # add_nodes_from is adding Node instances in addition to node names, is this intended?
+        # The topological sort will not work with this new graph
+        # self._graph.add_nodes_from(self._nodes)
 
         # Store the paths of the files containing the measurements and interventions
         self.interventions_path = interventions_path
@@ -243,9 +245,14 @@ class CausalGraph:
         Getter
         :return: a dictionary whose keys are the nodes name and the values are corresponding c-components
         """
+        # TODO: c_components was initialised as a list but used as a dict in the return, causing a crash during init
+        # I guess it was meant to be a dict instead of a list so I have updated it. Could you check that this method
+        # is still doing what is intended? I have commented the old version to help you check this, please remove it
+        # if everything is fine with the dict version.
 
         # Collect the c-components of all the graph's nodes
-        c_components = []
+        #c_components = []
+        c_components = {}
         remaining_nodes = set(self.nodes)
         found_nodes = set()
         while remaining_nodes:
@@ -253,14 +260,16 @@ class CausalGraph:
             # Remove a random element from the set of all remaining nodes, and find its c-component
             node = remaining_nodes.pop()
             c_component = self._get_c_component(node)
-            c_components.append(c_component)
+            c_components.update({node.name: c_component})
+            #c_components.append(c_component)
 
             # Update the sets of found and remaining nodes
             found_nodes |= c_component
             remaining_nodes -= found_nodes
 
         # Collect the c-component of each node
-        return {node.name: c_components[node.name] for node in self.nodes}
+        #return {node.name: c_components[node.name] for node in self.nodes}
+        return c_components
 
     def _get_c_component(self, node):
         """
@@ -273,7 +282,7 @@ class CausalGraph:
         while nodes:
             next_node = nodes.pop()
             c_component.add(next_node)
-            nodes += set(self.confounded_vars_cache[next_node]) - c_component
+            nodes += set(self.confounded_vars_cache[next_node.name]) - c_component
         return c_component
 
     def _get_confounded_variables(self):
@@ -385,15 +394,10 @@ class CausalGraph:
         Add the parents and children nodes to all the graph's nodes,
         fit all the nodes' equation, and sort the nodes in topological order
         """
-
-        # This is not ideal but hydra cannot handle list of configs for now so this is a workaround
-        if isinstance(self._nodes, DictConfig):
-            self._nodes = list(self._nodes.values())
-
         # Add parents and children nodes to all the nodes, and fit the node's equation
         nodes_map = self._get_node_map()
-        for node in self._nodes:
 
+        for node in self._nodes:
             # Get the node parents and children
             node.parents = [nodes_map[parent_name] for parent_name in node.parents_name]
             node.children = [nodes_map[child_name] for child_name in node.children_name]
@@ -427,14 +431,14 @@ class CausalGraph:
         :return: a list of nodes' name sorted in topological order
         """
         # Get the topological ordering
-        topological_ordering = nx.topological_sort(self._graph)
+        topological_ordering = list(nx.topological_sort(self._graph))
 
         # Reverse it if requested
         if backward:
             topological_ordering = reversed(topological_ordering)
 
         # Turn the topological ordering into a list
-        return list(topological_ordering)
+        return topological_ordering
 
     @staticmethod
     def log_adjacent_nodes(node):

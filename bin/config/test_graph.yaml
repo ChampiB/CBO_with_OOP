@@ -1,18 +1,19 @@
 cost_type: 1
-save_file: ${graph.name}_graph_variable_cost_${cost_type}.pdf
+save_file: ${graph.graph.name}_graph_variable_cost_${cost_type}.pdf
+n_initial_samples: 100
+show: true
 
 defaults:
   - _self_
   - graph: complete
 
 
-
 hydra:
   run:
-    dir: ${oc.env:XP_PATH}/${hydra.job.name}/${graph.name}
+    dir: ${oc.env:XP_PATH}/${hydra.job.name}/${graph.graph.name}
   sweep:
     dir: ${oc.env:XP_PATH}/${hydra.job.name}
-    subdir: ${graph.name}
+    subdir: ${graph.graph.name}
   job:
     config:
       override_dirname:
