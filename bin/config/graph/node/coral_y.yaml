@@ -11,3 +11,4 @@ Y:
     - TE
   equation:
     _target_: sklearn.linear_model.LinearRegression
+  is_reward_var: True

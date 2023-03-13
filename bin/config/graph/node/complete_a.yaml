@@ -12,3 +12,4 @@ A:
   # Fixed cost for type 2,3 is also 1
   fixed_cost: 1
   variable_cost: False
+  is_reward_var: False

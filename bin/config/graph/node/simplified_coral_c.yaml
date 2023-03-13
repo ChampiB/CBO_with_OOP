@@ -14,3 +14,4 @@ C:
   variable_cost: False
   min_intervention: 0.3
   max_intervention: 0.4
+  is_reward_var: False

@@ -14,3 +14,4 @@ D:
   variable_cost: False
   min_intervention: 1950
   max_intervention: 1965
+  is_reward_var: False

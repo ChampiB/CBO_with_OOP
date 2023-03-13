@@ -1,0 +1,6 @@
+_target_: cbo.algorithms.POMIS.POMIS
+name: "POMIS"
+graph: ${graph}
+
+defaults:
+    - _self_

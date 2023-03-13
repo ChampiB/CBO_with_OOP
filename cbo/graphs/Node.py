@@ -3,12 +3,16 @@ import numpy as np
 
 
 class Node:
+    """
+    A class representing a node in the causal graph.
+    """
+
     def __init__(
         self, name, equation, parents_name=(), children_name=(), fixed_cost=0, variable_cost=False,
-        seed=0, min_intervention=None, max_intervention=None
+        min_intervention=None, max_intervention=None, is_reward_var=False
     ):
-        """ Initialise the node of a Graph
-
+        """
+        Initialise the node of a Graph
         :param name: the name of the node
         :param parents_name: the names of the parents nodes
         :param children_name: the names of the children node
@@ -17,7 +21,7 @@ class Node:
         :param variable_cost: A boolean indicating whether the cost is fixed or variable
         :param min_intervention: Minimum value of the intervention
         :param max_intervention: Maximum value of the intervention
-        :param seed: seed of the node
+        :param is_reward_var: whether the node corresponds to a reward variable
         """
         self._name = name
         self.parents_name = parents_name
@@ -30,6 +34,7 @@ class Node:
         self.parents = []
         self.children = []
         self.value = None
+        self.is_reward_var = is_reward_var
 
     @property
     def name(self):
@@ -57,7 +62,6 @@ class Node:
     def structural_equation(self):
         """
         Update the value of the node during sampling
-        :return: None
         """
         if isinstance(self._equation, StringEquation):
             # We allow named parameters here so that the lambdas can use the node names as variable names
@@ -68,11 +72,10 @@ class Node:
             self.value = np.float64(self._equation.predict(parent_values))
 
     def fit_equation(self, node_measurement=None, parents_measurements=None):
-        """ Initially fit the structural equation if needed
-
+        """
+        Initially fit the structural equation if needed
         :param node_measurement: true measurements of the node
         :param parents_measurements: true measurements of its parents if they exist
-        :return: None
         """
         if parents_measurements is None:
             self._equation.fit(node_measurement)
@@ -80,3 +83,9 @@ class Node:
             # if both measurements are None, fit has no effect
             self._equation.fit(parents_measurements, node_measurement)
 
+    def is_reward(self):
+        """
+        Check whether the node correspond to a reward variable
+        :return: true, if the node correspond to a reward variable, false otherwise
+        """
+        return self.is_reward_var

@@ -9,3 +9,4 @@ Y:
   equation:
     _target_: cbo.graphs.StructuralEquations.StringEquation
     string_equation: "lambda epsilon, D, E, U1, U2: np.cos(D) - D / 5. + np.sin(E) - E / 4. + U1 + np.exp(-U2) + epsilon"
+  is_reward_var: True

@@ -6,3 +6,4 @@ U2:
   equation:
     _target_: cbo.graphs.StructuralEquations.StringEquation
     string_equation: "lambda epsilon: epsilon"
+  is_reward_var: False

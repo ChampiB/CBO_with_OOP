@@ -6,6 +6,7 @@ from cbo.utils_functions.utils import is_valid_path, save_figure
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+from cbo.algorithms.MIS import MIS
 
 
 class CausalGraph:
@@ -24,13 +25,12 @@ class CausalGraph:
         :param n_initial_samples: the initial number of observations the causal graph has access to
         """
 
-        # TODO add exploration set algorithm to hydra configuration, i.e., POMIS vs MIS
-
         # The networkx graph corresponding to the causal graph
-        self._nodes = nodes
+        self._nodes = self.instantiate_nodes(nodes)
+        self._nodes_name = [node.name for node in self._nodes]
         self._edges = self._get_edges()
         self._graph = nx.DiGraph(self._edges)
-        self._graph.add_nodes_from(self._nodes)
+        self._graph.add_nodes_from(self._nodes_name)
 
         # Store the paths of the files containing the measurements and interventions
         self.interventions_path = interventions_path
@@ -51,7 +51,7 @@ class CausalGraph:
         # Pre-process the nodes and retrieve the nodes map as well as the manipulative variables
         self._preprocess_nodes()
         self._nodes_map = self._get_node_map()
-        self._manipulative_variables = [node for node in nodes if node.min_intervention is not None]
+        self._manipulative_variables = [node for node in self._nodes if node.min_intervention is not None]
 
         # Create an empty list of bi-directed edges
         self.bi_directed_edges = []
@@ -64,10 +64,23 @@ class CausalGraph:
         self.descendants_cache = {}
         self.confounded_vars_cache = self._get_confounded_variables()
         self.c_components_cache = self._get_c_components()
-
         # TODO cache the ancestors and descendants variables for faster access (using a cache decorator?)
         # TODO |=> for now these caches below are unused
         # TODO all 4 caches should also be transferred when self.__getitem__ and self.do are called
+
+        # Retrieve the reward variables and the exploration set for the graph
+        self.exploration_set = MIS(self).run(self.reward_variables)
+        # TODO add exploration set algorithm to hydra configuration, i.e., POMIS vs MIS
+
+    @staticmethod
+    def instantiate_nodes(nodes):
+        """
+        Instantiate the nodes from the hydra configurations
+        :param nodes: the nodes from the hydra configurations
+        :return: the instantiated nodes
+        """
+        # This is not ideal but hydra cannot handle list of configs for now so this is a workaround
+        return list(nodes.values()) if isinstance(nodes, DictConfig) else nodes
 
     def __getitem__(self, nodes):
         """
@@ -199,6 +212,10 @@ class CausalGraph:
         :return: the nodes' ancestors
         """
 
+        # Make sure the ancestors are stored in a list
+        if ancestors is None:
+            ancestors = []
+
         # Turns single node into a list of size one
         if not isinstance(nodes, list):
             nodes = [nodes]
@@ -211,7 +228,8 @@ class CausalGraph:
                 # Add the parent and its ancestors to the list of ancestors, if not already added
                 if parent not in ancestors:
                     an.append(parent)
-                    an += CausalGraph.ancestors(parent, ancestors=an)
+                    ancestors.append(parent)
+                    an += CausalGraph.ancestors(parent, ancestors=ancestors)
         return an
 
     @staticmethod
@@ -260,7 +278,7 @@ class CausalGraph:
             remaining_nodes -= found_nodes
 
         # Collect the c-component of each node
-        return {node.name: c_components[node.name] for node in self.nodes}
+        return {node.name: c_component for c_component in c_components for node in c_component}
 
     def _get_c_component(self, node):
         """
@@ -273,7 +291,7 @@ class CausalGraph:
         while nodes:
             next_node = nodes.pop()
             c_component.add(next_node)
-            nodes += set(self.confounded_vars_cache[next_node]) - c_component
+            nodes += set(self.confounded_vars_cache[next_node.name]) - c_component
         return c_component
 
     def _get_confounded_variables(self):
@@ -366,6 +384,14 @@ class CausalGraph:
         """
         return self._manipulative_variables
 
+    @property
+    def reward_variables(self):
+        """
+        Getter
+        :return: the reward variables of the graph
+        """
+        return [node for node in self._nodes if node.is_reward()]
+
     def _get_edges(self):
         """
         Collect all the edges corresponding to the graph's nodes, i.e., self.nodes
@@ -386,10 +412,6 @@ class CausalGraph:
         fit all the nodes' equation, and sort the nodes in topological order
         """
 
-        # This is not ideal but hydra cannot handle list of configs for now so this is a workaround
-        if isinstance(self._nodes, DictConfig):
-            self._nodes = list(self._nodes.values())
-
         # Add parents and children nodes to all the nodes, and fit the node's equation
         nodes_map = self._get_node_map()
         for node in self._nodes:
@@ -406,10 +428,11 @@ class CausalGraph:
 
         # Perform a topological sort on the graph's nodes
         nodes_name = self.topological_sort()
+        print(nodes_name)
         self._nodes = [nodes_map[node_name] for node_name in nodes_name]
 
     @staticmethod
-    def _all_nodes_in_set(nodes, target_set):  # TODO remove this? as "only" in MIS may be graph.nodes.name
+    def only(nodes, target_set):
         """
         Returns all the nodes that are in the target set
         :param nodes: the nodes that needs to be checked

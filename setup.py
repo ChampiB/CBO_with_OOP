@@ -16,7 +16,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     scripts=[
-        "bin/test_graph.py"
+        "bin/display_graph.py"
     ],
     install_requires=[
         "numpy~=1.23.5",

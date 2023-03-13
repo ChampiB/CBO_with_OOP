@@ -15,3 +15,4 @@ O:
   variable_cost: False
   min_intervention: 3
   max_intervention: 4
+  is_reward_var: False
