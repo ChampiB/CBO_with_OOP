@@ -1,15 +1,10 @@
-# This is a simple helper to test the different graphs
-# TODO: graph config should be improved with custom omegaconf resolvers for cost type:
-# https://omegaconf.readthedocs.io/en/2.2_branch/custom_resolvers.html
-# I will work on this next week
-
-variable_cost: False
+cost_type: 1
+save_file: ${graph.name}_graph_variable_cost_${cost_type}.pdf
 
 defaults:
   - _self_
   - graph: complete
 
-save_file: ${graph.name}_graph_variable_cost_${variable_cost}.pdf
 
 
 hydra:

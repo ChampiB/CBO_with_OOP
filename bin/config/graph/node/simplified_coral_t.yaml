@@ -9,8 +9,7 @@ T:
     - CO
   equation:
     _target_: sklearn.linear_model.LinearRegression
-  # Fixed cost for type 2,3 is 5
-  fixed_cost: 1
-  variable_cost: False
+  fixed_cost: "${set_cost_value: ${cost_type}, 5}"
+  variable_cost: "${set_variable_cost: ${cost_type}}"
   min_intervention: 2300
   max_intervention: 2400

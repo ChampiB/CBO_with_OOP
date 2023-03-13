@@ -7,8 +7,7 @@ N:
   equation:
     _target_: cbo.graphs.StructuralEquations.GaussianMixture
     n_components: 3
-  # Fixed cost for type 2,3 is also 1
-  fixed_cost: 1
-  variable_cost: False
+  fixed_cost: "${set_cost_value: ${cost_type}, 1}"
+  variable_cost: "${set_variable_cost: ${cost_type}}"
   min_intervention: -2
   max_intervention: 5

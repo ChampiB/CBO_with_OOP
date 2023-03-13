@@ -9,6 +9,5 @@ C:
   equation:
     _target_: cbo.graphs.StructuralEquations.StringEquation
     string_equation: "lambda epsilon, B: np.exp(-B) + epsilon"
-  # Fixed cost for type 2,3 is 2
-  fixed_cost: 1
-  variable_cost: False
+  fixed_cost: "${set_cost_value: ${cost_type}, 2}"
+  variable_cost: "${set_variable_cost: ${cost_type}}"
