@@ -18,7 +18,7 @@ def display_graph(config):
     logging.info("Graph config:\n{}".format(OmegaConf.to_yaml(config)))
 
     # Instantiate the graph described in the configuration
-    graph = instantiate(config.graph)
+    graph = instantiate(config.graph.graph)
 
     # Display the loaded graph
     graph.save_drawing(config.save_file, show=config.show)
