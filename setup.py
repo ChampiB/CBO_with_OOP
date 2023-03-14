@@ -16,7 +16,9 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     scripts=[
-        "bin/display_graph"
+        "bin/display_graph",
+        "bin/run_cbo_algo",
+        "bin/run_exploration_set_algo"
     ],
     install_requires=[
         "numpy~=1.23.5",
