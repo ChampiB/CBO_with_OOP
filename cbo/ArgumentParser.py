@@ -4,7 +4,7 @@ from argparse import ArgumentParser as ArgParser
 
 class ArgumentParser:
     """
-    A class used to parse the argument of the script called: 'run_cbo_algo.py'.
+    A class used to parse the argument of the script called: 'run_cbo_algo'.
     """
 
     def __init__(self):

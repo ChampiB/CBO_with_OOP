@@ -54,22 +54,22 @@ class CausalGraph:
 
         # Create an empty list of bi-directed edges
         self.bi_directed_edges = []
-        # TODO add support for bi_directed_edges and unobserved confounders
-        # TODO bi-directed edges are 3-tuples of the form (x:Node, y:Node, u:confounder_name -> a string)
-        # TODO update comment above self.bi_directed_edges
+        # TODO[lisa] add support for bi_directed_edges and unobserved confounders
+        # TODO[lisa] bi-directed edges are 3-tuples of the form (x:Node, y:Node, u:confounder_name -> a string)
+        # TODO[lisa] update comment above self.bi_directed_edges
 
         # Create the caches for the ancestors, descendants, c-components and confounded variables
         self.ancestors_cache = {}
         self.descendants_cache = {}
         self.confounded_vars_cache = self._get_confounded_variables()
         self.c_components_cache = self._get_c_components()
-        # TODO cache the ancestors and descendants variables for faster access (using a cache decorator?)
-        # TODO |=> for now these caches below are unused
-        # TODO all 4 caches should also be transferred when self.__getitem__ and self.do are called
+        # TODO[lisa] cache the ancestors and descendants variables for faster access (using a cache decorator?)
+        # TODO[lisa] |=> for now these caches below are unused
+        # TODO[lisa] all 4 caches should also be transferred when self.__getitem__ and self.do are called
 
         # Retrieve the reward variables and the exploration set for the graph
         self.exploration_set = MIS(self).run(self.reward_variables)
-        # TODO add exploration set algorithm to hydra configuration, i.e., POMIS vs MIS
+        # TODO[lisa] add exploration set algorithm to hydra configuration, i.e., POMIS vs MIS
 
     def __getitem__(self, nodes):
         """
@@ -290,7 +290,7 @@ class CausalGraph:
 
         # Create the list of confounded variables associated to all bi-directed edges in the graph
         confounded_vars = {}
-        for x, y, u in self.bi_directed_edges:
+        for x, y, _ in self.bi_directed_edges:
 
             # Add y as a confounded variable of x, if not done already
             self._safe_add(confounded_vars, x.name, y)
