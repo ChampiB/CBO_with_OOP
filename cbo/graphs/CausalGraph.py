@@ -24,13 +24,6 @@ class CausalGraph:
         :param n_initial_samples: the initial number of observations the causal graph has access to
         """
 
-        # The networkx graph corresponding to the causal graph
-        self._nodes = nodes
-        self._nodes_name = [node.name for node in self._nodes]
-        self._edges = self._get_edges()
-        self._graph = nx.DiGraph(self._edges)
-        self._graph.add_nodes_from(self._nodes_name)
-
         # Store the paths of the files containing the measurements and interventions
         self.interventions_path = interventions_path
         self.obs_path = obs_path
@@ -44,13 +37,9 @@ class CausalGraph:
         self._observations = pd.read_pickle(obs_path)[:n_initial_samples]
         self._true_observations = pd.read_pickle(true_obs_path) if is_valid_path(true_obs_path) else None
 
-        # The graph's name
-        self._name = name
-
-        # Pre-process the nodes and retrieve the nodes map as well as the manipulative variables
-        self._preprocess_nodes()
-        self._nodes_map = self._get_node_map()
-        self._manipulative_variables = [node for node in self._nodes if node.min_intervention is not None]
+        # Create the networkx graph corresponding to the causal graph
+        self._graph = None
+        self._preprocess_nodes(nodes, name)
 
         # Create an empty list of bi-directed edges
         self.bi_directed_edges = []
@@ -58,9 +47,7 @@ class CausalGraph:
         # TODO[lisa] bi-directed edges are 3-tuples of the form (x:Node, y:Node, u:confounder_name -> a string)
         # TODO[lisa] update comment above self.bi_directed_edges
 
-        # Create the caches for the ancestors, descendants, c-components and confounded variables
-        self.ancestors_cache = {}
-        self.descendants_cache = {}
+        # Create the caches for the c-components and confounded variables
         self.confounded_vars_cache = self._get_confounded_variables()
         self.c_components_cache = self._get_c_components()
         # TODO[lisa] cache the ancestors and descendants variables for faster access (using a cache decorator?)
@@ -156,12 +143,11 @@ class CausalGraph:
 
         return formatted_nodes
 
-    @staticmethod
-    def parents(nodes):
+    def parents(self, nodes):
         """
         Getter
-        :params nodes: the nodes whose parents should be returned
-        :return: the nodes' parents
+        :params nodes: the names of the nodes whose parents should be returned
+        :return: the names of the nodes' parents
         """
 
         # Turns single node into a list of size one
@@ -171,15 +157,14 @@ class CausalGraph:
         # Collect all the node's parents
         pa = []
         for node in nodes:
-            pa.extend(node.parents)
-        return pa
+            pa.extend(self._graph.predecessors(self._graph.graph[node]))
+        return set(pa)
 
-    @staticmethod
-    def children(nodes):
+    def children(self, nodes):
         """
         Getter
-        :params nodes: the nodes whose children should be returned
-        :return: the nodes' children
+        :params nodes: the names of the nodes whose children should be returned
+        :return: the names of the nodes' children
         """
 
         # Turns single node into a list of size one
@@ -189,19 +174,16 @@ class CausalGraph:
         # Collect all the node's children
         ch = []
         for node in nodes:
-            ch.extend(node.children)
-        return ch
+            ch.extend(self._graph.successors(self._graph.graph[node]))
+        return set(ch)
 
-    @staticmethod
-    def ancestors(nodes, ancestors=None):
+    def ancestors(self, nodes, ancestors=None):
         """
         Getter
-        :params nodes: the nodes whose ancestors should be returned
+        :params nodes: the names of the nodes whose ancestors should be returned
         :params ancestors: the current list of ancestors
-        :return: the nodes' ancestors
+        :return: the names of nodes' ancestors
         """
-
-        # Make sure the ancestors are stored in a list
         if ancestors is None:
             ancestors = []
 
@@ -209,41 +191,30 @@ class CausalGraph:
         if not isinstance(nodes, list):
             nodes = [nodes]
 
-        # Collect all the node's ancestors
-        an = []
         for node in nodes:
-            for parent in node.parents:
+            ancestors.extend(nx.ancestors(self._graph, node))
 
-                # Add the parent and its ancestors to the list of ancestors, if not already added
-                if parent not in ancestors:
-                    an.append(parent)
-                    ancestors.append(parent)
-                    an += CausalGraph.ancestors(parent, ancestors=ancestors)
-        return an
+        return set(ancestors)
 
-    @staticmethod
-    def descendants(nodes, descendants=None):
+    def descendants(self, nodes, descendants=None):
         """
         Getter
-        :params nodes: the nodes whose descendants should be returned
+        :params nodes: the names of the nodes whose descendants should be returned
         :params descendants: the current list of descendants
-        :return: the nodes' descendants
+        :return: the names of the nodes' descendants
         """
 
         # Turns single node into a list of size one
         if not isinstance(nodes, list):
             nodes = [nodes]
 
-        # Collect all the node's descendants
-        de = []
-        for node in nodes:
-            for child in node.children:
+        if descendants is None:
+            descendants = []
 
-                # Add the child and its descendants to the list of descendants, if not already added
-                if child not in descendants:
-                    de.append(child)
-                    de += CausalGraph.descendants(child, descendants=de)
-        return de
+        for node in nodes:
+            descendants.extend(nx.descendants(self._graph, node))
+
+        return set(descendants)
 
     def _get_c_components(self):
         """
@@ -338,7 +309,7 @@ class CausalGraph:
         Getter
         :return: the graph's name
         """
-        return self._name
+        return self._graph.name
 
     @property
     def nodes(self):
@@ -346,7 +317,7 @@ class CausalGraph:
         Getter
         :return: the graph's nodes
         """
-        return self._nodes
+        return self._graph.nodes
 
     @property
     def edges(self):
@@ -354,15 +325,7 @@ class CausalGraph:
         Getter
         :return: the graph's edges
         """
-        return self._edges
-
-    @property
-    def nodes_map(self):
-        """
-        Getter
-        :return: a map from nodes name to the corresponding nodes in the graph
-        """
-        return self._nodes_map
+        return self._graph.edges
 
     @property
     def manipulative_variables(self):
@@ -370,7 +333,7 @@ class CausalGraph:
         Getter
         :return: the graph's manipulative variables
         """
-        return self._manipulative_variables
+        return self._graph.graph["manipulative_variables"]
 
     @property
     def reward_variables(self):
@@ -378,45 +341,29 @@ class CausalGraph:
         Getter
         :return: the reward variables of the graph
         """
-        return [node for node in self._nodes if node.is_reward()]
+        return [node for node in self._graph.nodes if node.is_reward()]
 
-    def _get_edges(self):
-        """
-        Collect all the edges corresponding to the graph's nodes, i.e., self.nodes
-        :return: the graph's edges
-        """
-        return [(node.name, child_name) for node in self.nodes for child_name in node.children_name]
+    def _preprocess_nodes(self, nodes, name):
+        """ Add the parents and children nodes to all the graph's nodes,
+        fit all the nodes' equation, sort the nodes in topological order, and initialise the networkx graph
 
-    def _get_node_map(self):
+        :param nodes: the list of nodes to use
+        :param: the name of the graph
         """
-        Create the nodes map
-        :return: a map from nodes name to the corresponding nodes in the graph
-        """
-        return {node.name: node for node in self._nodes}
 
-    def _preprocess_nodes(self):
-        """
-        Add the parents and children nodes to all the graph's nodes,
-        fit all the nodes' equation, and sort the nodes in topological order
-        """
-        # Add parents and children nodes to all the nodes, and fit the node's equation
-        nodes_map = self._get_node_map()
+        nodes_dict = {node.name: node for node in nodes}
+        manipulative_variables = [node.name for node in nodes_dict if node.min_intervention is not None]
+        edges = [(node.name, child_name) for node in self.nodes for child_name in node.children_name]
 
-        for node in self._nodes:
-            # Get the node parents and children
-            node.parents = [nodes_map[parent_name] for parent_name in node.parents_name]
-            node.children = [nodes_map[child_name] for child_name in node.children_name]
+        self._graph = nx.DiGraph(edges, **nodes_dict, manipulative_variables=manipulative_variables, name=name)
+        self._graph.add_nodes_from(nodes_dict.keys())
 
-            # Log the retrieved parents and children
-            self.log_adjacent_nodes(node)
+        self._graph.graph["topological_order"] = list(self.topological_sort())
 
+        # Fit all the nodes' equations
+        for node_name in self._graph.graph["topological_order"]:
             # Fit the node's equation based on available measurements
-            self._fit_equation(node)
-
-        # Perform a topological sort on the graph's nodes
-        nodes_name = self.topological_sort()
-        logger.debug(nodes_name)
-        self._nodes = [nodes_map[node_name] for node_name in nodes_name]
+            self._fit_equation(node_name)
 
     @staticmethod
     def only(nodes, target_set):
@@ -436,26 +383,21 @@ class CausalGraph:
         :param backward: reverse the topological order such that the children comes before their parents
         :return: a list of nodes' name sorted in topological order
         """
+        # TODO[theophile]: Topological sort is not possible for graphs containing cycles how should we propagate in that case?
+        # For now we just return the initial order but this may cause unexpected behaviours
+
         # Get the topological ordering
-        topological_ordering = list(nx.topological_sort(self._graph))
+        if nx.is_directed_acyclic_graph(self._graph):
+            topological_ordering = nx.topological_sort(self._graph)
+        else:
+            # If not possible use the initial order for now. May need to be updated.
+            topological_ordering = self._graph.nodes
 
         # Reverse it if requested
         if backward:
             topological_ordering = reversed(topological_ordering)
 
-        # Turn the topological ordering into a list
         return topological_ordering
-
-    @staticmethod
-    def log_adjacent_nodes(node):
-        """
-        Logs the adjacent nodes to node passed as parameters, i.e., the node's parents and children
-        :param node: the node whose parents and children should be displayed
-        """
-        logger.debug("Getting the parents of node {}".format(node.name))
-        logger.debug("node.parents = {}".format(node.parents))
-        logger.debug("Getting the children of node {}".format(node.name))
-        logger.debug("node.children = {}".format(node.children))
 
     def save_drawing(self, f_name, show=False):
         """
@@ -473,14 +415,15 @@ class CausalGraph:
     def _fit_equation(self, node):
         """
         Fit the equation of a node based on the true observations is available
-        :param node: The node to update
+        :param node: The name of the node to update
         """
-        logger.debug("Fitting structural equation of node {}".format(node.name))
+        logger.debug("Fitting structural equation of node {}".format(node))
         if self._true_observations is None:
             return
-        node_values = np.ones((1, 1)) * np.array(self._true_observations[node.name])
-        parents_values = np.ones((1, 1)) * np.hstack([self._true_observations[p.name] for p in node.parents]) if node.parents else None
-        node.fit_equation(node_measurement=node_values, parents_measurements=parents_values)
+        node_values = np.ones((1, 1)) * np.array(self._true_observations[node])
+        parents = self.parents(node)
+        parents_values = np.ones((1, 1)) * np.hstack([self._true_observations[p] for p in parents]) if parents else None
+        self._graph.graph[node].fit_equation(node_measurement=node_values, parents_measurements=parents_values)
 
     def fit_all_gaussian_processes(self, *args, **kwargs):
         # TODO: implement this if still needed
@@ -502,5 +445,6 @@ class CausalGraph:
         """
         Sample values from each node of the graph
         """
-        for node in self.nodes:
-            node.structural_equation()
+        for node in self._graph.graph["topological_order"]:
+            parents = [self._graph.graph[p] for p in self.parents(node)]
+            self._graph.graph[node].structural_equation(parents)

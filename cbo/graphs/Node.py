@@ -7,10 +7,8 @@ class Node:
     A class representing a node in the causal graph.
     """
 
-    def __init__(
-        self, name, equation, parents_name=(), children_name=(), fixed_cost=0, variable_cost=False,
-        min_intervention=None, max_intervention=None, is_reward_var=False
-    ):
+    def __init__(self, name, equation, parents_name=(), children_name=(), fixed_cost=0, variable_cost=False,
+                 min_intervention=None, max_intervention=None, is_reward_var=False):
         """
         Initialise the node of a Graph
         :param name: the name of the node
@@ -31,8 +29,6 @@ class Node:
         self._variable_cost = variable_cost
         self._min_intervention = min_intervention
         self._max_intervention = max_intervention
-        self.parents = []
-        self.children = []
         self.value = None
         self.is_reward_var = is_reward_var
 
@@ -59,16 +55,16 @@ class Node:
             cost += np.sum(np.abs(interventions))
         return cost
 
-    def structural_equation(self):
+    def structural_equation(self, parents):
         """
         Update the value of the node during sampling
         """
         if isinstance(self._equation, StringEquation):
             # We allow named parameters here so that the lambdas can use the node names as variable names
-            parent_values = {p.name: p.value for p in self.parents}
+            parent_values = {p.name: p.value for p in parents}
             self.value = np.float64(self._equation.predict(**parent_values))
         else:
-            parent_values = np.array([[p.value for p in self.parents]])
+            parent_values = np.array([[p.value for p in parents]])
             self.value = np.float64(self._equation.predict(parent_values))
 
     def fit_equation(self, node_measurement=None, parents_measurements=None):
