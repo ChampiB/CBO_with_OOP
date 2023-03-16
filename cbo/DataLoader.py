@@ -19,13 +19,13 @@ class DataLoader:  # TODO remove
         """
 
         # Load the measurements
-        self.all_measurements = pd.read_pickle(f'./data/{experiment}/observations.pkl')
+        self.all_measurements = pd.read_pickle(f'../data/{experiment}/observations.pkl')
         self.measurements = self.all_measurements[:initial_num_obs_samples]
-        observations_file = f'./data/{experiment}/true_observations.pkl'
+        observations_file = f'../data/{experiment}/true_observations.pkl'
         true_measurements = pd.read_pickle(observations_file) if os.path.exists(observations_file) else None
 
         # Get true interventional data
-        self.interventions = np.load(f'./data/{experiment}/interventional_data.npy', allow_pickle=True)
+        self.interventions = np.load(f'../data/{experiment}/interventional_data.npy', allow_pickle=True)
 
         # The list a supported graphs
         graph_classes = {

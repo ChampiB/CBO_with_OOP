@@ -90,8 +90,6 @@ class CausalGraph:
             new_node = copy.deepcopy(node)
             new_node.parents_name = [parent_name for parent_name in node.parents_name if parent_name in nodes_name]
             new_node.children_name = [child_name for child_name in node.children_name if child_name in nodes_name]
-            new_node.parents = []
-            new_node.children = []
             formatted_nodes.append(new_node)
 
         return formatted_nodes
@@ -177,30 +175,28 @@ class CausalGraph:
             ch.extend(self._graph.successors(self._graph.graph[node]))
         return set(ch)
 
-    def ancestors(self, nodes, ancestors=None):
+    def ancestors(self, nodes):
         """
         Getter
         :params nodes: the names of the nodes whose ancestors should be returned
-        :params ancestors: the current list of ancestors
         :return: the names of nodes' ancestors
         """
-        if ancestors is None:
-            ancestors = []
 
         # Turns single node into a list of size one
         if not isinstance(nodes, list):
             nodes = [nodes]
 
+        # Retrieve all the nodes ancestors
+        ancestors = []
         for node in nodes:
             ancestors.extend(nx.ancestors(self._graph, node))
 
         return set(ancestors)
 
-    def descendants(self, nodes, descendants=None):
+    def descendants(self, nodes):
         """
         Getter
         :params nodes: the names of the nodes whose descendants should be returned
-        :params descendants: the current list of descendants
         :return: the names of the nodes' descendants
         """
 
@@ -208,9 +204,8 @@ class CausalGraph:
         if not isinstance(nodes, list):
             nodes = [nodes]
 
-        if descendants is None:
-            descendants = []
-
+        # Retrieve all the nodes descendants
+        descendants = []
         for node in nodes:
             descendants.extend(nx.descendants(self._graph, node))
 
@@ -309,7 +304,7 @@ class CausalGraph:
         Getter
         :return: the graph's name
         """
-        return self._graph.name
+        return self._graph.graph["name"]
 
     @property
     def nodes(self):
@@ -344,9 +339,9 @@ class CausalGraph:
         return [node for node in self._graph.nodes if node.is_reward()]
 
     def _preprocess_nodes(self, nodes, name):
-        """ Add the parents and children nodes to all the graph's nodes,
+        """
+        Add the parents and children nodes to all the graph's nodes,
         fit all the nodes' equation, sort the nodes in topological order, and initialise the networkx graph
-
         :param nodes: the list of nodes to use
         :param: the name of the graph
         """
@@ -362,16 +357,17 @@ class CausalGraph:
 
         # Fit all the nodes' equations
         for node_name in self._graph.graph["topological_order"]:
+
             # Fit the node's equation based on available measurements
             self._fit_equation(node_name)
 
     @staticmethod
     def only(nodes, target_set):
         """
-        Returns all the nodes that are in the target set
+        Returns all the nodes that are in the set passed as parameter
         :param nodes: the nodes that needs to be checked
         :param target_set: the target set
-        :return: all the nodes that are in the target set
+        :return: all the nodes that are in the set passed as parameter
         """
         if not target_set:
             return []
@@ -384,13 +380,13 @@ class CausalGraph:
         :return: a list of nodes' name sorted in topological order
         """
         # TODO[theophile]: Topological sort is not possible for graphs containing cycles how should we propagate in that case?
-        # For now we just return the initial order but this may cause unexpected behaviours
+        # TODO For now we just return the initial order but this may cause unexpected behaviours
 
         # Get the topological ordering
         if nx.is_directed_acyclic_graph(self._graph):
             topological_ordering = nx.topological_sort(self._graph)
         else:
-            # If not possible use the initial order for now. May need to be updated.
+            # TODO If not possible use the initial order for now. May need to be updated.
             topological_ordering = self._graph.nodes
 
         # Reverse it if requested

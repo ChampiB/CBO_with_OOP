@@ -7,8 +7,10 @@ class Node:
     A class representing a node in the causal graph.
     """
 
-    def __init__(self, name, equation, parents_name=(), children_name=(), fixed_cost=0, variable_cost=False,
-                 min_intervention=None, max_intervention=None, is_reward_var=False):
+    def __init__(
+        self, name, equation, parents_name=(), children_name=(), fixed_cost=0, variable_cost=False,
+        min_intervention=None, max_intervention=None, is_reward_var=False
+    ):
         """
         Initialise the node of a Graph
         :param name: the name of the node
