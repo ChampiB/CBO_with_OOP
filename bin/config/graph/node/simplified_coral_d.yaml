@@ -8,8 +8,9 @@ D:
     - O
     - CO
   equation:
-    _target_: SklearnEquation
-    sklearn_model: sklearn.linear_model.LinearRegression
+    _target_: cbo.graphs.StructuralEquations.SklearnEquation
+    sklearn_model:
+      _target_: sklearn.linear_model.LinearRegression
   fixed_cost: "${set_cost_value: ${cost_type}, 20}"
   variable_cost: "${set_variable_cost: ${cost_type}}"
   min_intervention: 2000

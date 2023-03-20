@@ -11,6 +11,7 @@ TE:
     - CO
     - Y
   equation:
-    _target_: SklearnEquation
-    sklearn_model: sklearn.linear_model.LinearRegression
+    _target_: cbo.graphs.StructuralEquations.SklearnEquation
+    sklearn_model:
+      _target_: sklearn.linear_model.LinearRegression
   is_reward_var: False
