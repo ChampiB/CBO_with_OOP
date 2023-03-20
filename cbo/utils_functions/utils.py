@@ -72,3 +72,30 @@ def save_figure(out_fname, dpi=300, tight=True):
     plt.clf()
     plt.cla()
     plt.close()
+
+
+def remove_node_from_family(node, node_to_remove, unobserved_node=None):
+    """ Remove the node_to_remove from parents and children names of a given node and add an unobserved variable as
+    parent is specified
+
+    :param node: the name of the node whose family will be updated
+    :param node_to_remove: the name of the node to remove from the family
+    :param unobserved_node: the name of the node to set as new parent if specified
+    :return: None
+    """
+    node.children_name.remove(node_to_remove.name) if node_to_remove.name in node.children_name else None
+    node.parents_name.remove(node_to_remove.name) if node_to_remove.name in node.parents_name_name else None
+    node.parents_name.append(unobserved_node) if unobserved_node is not None else None
+
+
+def safe_add(dictionary, key, new_node):
+    """
+    Add a new node to the list of nodes corresponding to the key passed as parameters
+    :param dictionary: the dictionary whose keys are nodes name and values are the corresponding list of nodes
+    :param key: the key for which a new node needs to be added
+    :param new_node: the new node to add to the list of nodes corresponding to the key
+    """
+    if key not in dictionary.keys():
+        dictionary[key] = [new_node]
+    elif new_node not in dictionary[key]:
+        dictionary[key].append(new_node)

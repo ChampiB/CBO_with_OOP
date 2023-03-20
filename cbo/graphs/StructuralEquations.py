@@ -52,3 +52,14 @@ class StringEquation(StructuralEquationInterface):
 
     def predict(self, *args, **kwargs):
         return self._equation(**kwargs)
+
+
+class SklearnEquation(StructuralEquationInterface):
+    def __init__(self, sklearn_model):
+        super(SklearnEquation, self).__init__(sklearn_model)
+
+    def fit(self, *args, **kwargs):
+        self._equation.fit(*args)
+
+    def predict(self, *args, **kwargs):
+        return self._equation.predict(*args)

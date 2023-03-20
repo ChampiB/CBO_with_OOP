@@ -9,7 +9,7 @@ class Node:
 
     def __init__(
         self, name, equation, parents_name=(), children_name=(), fixed_cost=0, variable_cost=False,
-        min_intervention=None, max_intervention=None, is_reward_var=False
+        min_intervention=None, max_intervention=None, is_reward_var=False, is_unobserved=False
     ):
         """
         Initialise the node of a Graph
@@ -22,6 +22,7 @@ class Node:
         :param min_intervention: Minimum value of the intervention
         :param max_intervention: Maximum value of the intervention
         :param is_reward_var: whether the node corresponds to a reward variable
+        :param is_unobserved: whether the node is observed
         """
         self._name = name
         self.parents_name = parents_name
@@ -32,7 +33,8 @@ class Node:
         self._min_intervention = min_intervention
         self._max_intervention = max_intervention
         self.value = None
-        self.is_reward_var = is_reward_var
+        self._is_reward = is_reward_var
+        self._is_unobserved = is_unobserved
 
     @property
     def name(self):
@@ -45,6 +47,14 @@ class Node:
     @property
     def max_intervention(self):
         return self._max_intervention
+
+    @property
+    def is_reward(self):
+        return self._is_reward
+
+    @property
+    def is_unobserved(self):
+        return self._is_unobserved
 
     def total_cost(self, interventions):
         """
@@ -61,13 +71,18 @@ class Node:
         """
         Update the value of the node during sampling
         """
+        # TODO[Theo]: in the original CBO, epsilon could be passed as parameter but as far as I know, it was always None
+        # TODO[Theo]: and ended up being random noise sampled from N(0,1) (see old sample_from_model from utils_function
+        # TODO[Theo]: l.17). I have remove the possibility to manually pass epsilon for now because it adds a possibly
+        # TODO[Theo]: unneeded layer of complexity. Let me know if I should add it again.
+        epsilon = np.random.randn()
         if isinstance(self._equation, StringEquation):
             # We allow named parameters here so that the lambdas can use the node names as variable names
             parent_values = {p.name: p.value for p in parents}
-            self.value = np.float64(self._equation.predict(**parent_values))
+            self.value = np.float64(self._equation.predict(**parent_values, epsilon=epsilon))
         else:
             parent_values = np.array([[p.value for p in parents]])
-            self.value = np.float64(self._equation.predict(parent_values))
+            self.value = np.float64(self._equation.predict(parent_values, epsilon=epsilon))
 
     def fit_equation(self, node_measurement=None, parents_measurements=None):
         """
@@ -80,10 +95,3 @@ class Node:
         else:
             # if both measurements are None, fit has no effect
             self._equation.fit(parents_measurements, node_measurement)
-
-    def is_reward(self):
-        """
-        Check whether the node correspond to a reward variable
-        :return: true, if the node correspond to a reward variable, false otherwise
-        """
-        return self.is_reward_var
