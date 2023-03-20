@@ -6,29 +6,26 @@ class MIS(ExplorationSetInterface):
     An implementation of the Minimal Intervention Sets algorithm.
     """
 
-    def __init__(self, graph):
-        """
-        Constructor of the minimal intervention sets algorithm
-        :param graph: the graph on which the algorithm will be run
-        """
-        self._graph = graph
+    def __init__(self, **kwarg):
+        pass
 
-    def run(self, reward_variables):
+    def run(self, graph, reward_variables):
         """
         Find all the minimal intervention sets w.r.t. the reward variables
+        :param graph: the graph on which the algorithm must be run
         :param reward_variables: the reward variables
         :return: all the minimal intervention sets
         """
 
         # Collect all the nodes that does not correspond to reward variables
-        non_reward_nodes = self.set_minus(self._graph.nodes, reward_variables)
+        non_reward_nodes = self.filter_set(graph.nodes, reward_variables)
 
         # Create the graph induced by the ancestors of the reward variables
-        induced_graph = self._graph[self._graph.ancestors(reward_variables)]
+        induced_graph = graph[graph.ancestors(reward_variables)]
 
         # Create a topological ordering of all the non-reward nodes
         topological_ordering = induced_graph.topological_sort(backward=True)
-        topological_ordering = self._graph.only(topological_ordering, non_reward_nodes)
+        topological_ordering = graph.only(topological_ordering, non_reward_nodes)
 
         # Compute all the minimal intervention sets recursively
         return self.sub_miss(induced_graph, reward_variables, frozenset(), topological_ordering)
@@ -53,7 +50,7 @@ class MIS(ExplorationSetInterface):
             do_graph = do_graph[do_graph.ancestors(reward_variables)]
 
             # Create the new topological ordering
-            new_topological_ordering = self._graph.only(topological_ordering[i + 1:], do_graph.nodes)
+            new_topological_ordering = graph.only(topological_ordering[i + 1:], do_graph.nodes)
 
             # Compute all the sub-minimal intervention sets by adding a variable to a previously obtained
             # minimal intervention set

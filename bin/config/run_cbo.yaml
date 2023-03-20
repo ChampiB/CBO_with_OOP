@@ -7,6 +7,7 @@ n_initial_samples: 100
 
 defaults:
   - _self_
+  - algorithm: mis
   - graph: complete
 
 

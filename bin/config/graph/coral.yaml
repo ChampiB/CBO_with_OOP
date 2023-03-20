@@ -6,7 +6,7 @@ graph:
     interventions_path: ${oc.env:DATA_PATH}/coral_graph/interventional_data.npy
     n_initial_samples: ${n_initial_samples}
     nodes: "${get_values: ${graph.nodes_dict}}"
-    exploration_set_fn: algorithm/mis
+    exploration_set_fn: ${algorithm}
 
 defaults:
    - node@nodes_dict:
