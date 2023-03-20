@@ -18,11 +18,11 @@ class ExplorationSetInterface(ABC):
         ...
 
     @staticmethod
-    def filter_set(nodes, names):
+    def set_minus(nodes, names):
         """
         A function selecting only the nodes whose name are in the list of names passed as parameters
         :param nodes: all the nodes that should be filtered out
         :param names: the list of names to keep
         :return: the nodes whose name are in the list of names passed as parameters
         """
-        return [node for node in nodes if node in names]
+        return [node for node in nodes if node not in names]

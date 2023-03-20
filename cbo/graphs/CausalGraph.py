@@ -112,28 +112,25 @@ class CausalGraph:
     def _format_do_nodes(self, do_nodes):
         """
         Format all the graph's nodes to fit the format expected by the causal graph constructor
-        :param do_nodes: all the nodes being intervened on
+        :param do_nodes: all the nodes name being intervened on
         :return: the formatted nodes
         """
-
-        # Get the name of all nodes being intervened on
-        do_nodes_name = [node.name for node in do_nodes]
 
         # Format all the graph's nodes
         formatted_nodes = []
         for node in self.nodes:
 
             # Make a copy of each node, and get its name
-            new_node = copy.deepcopy(node)
+            new_node = copy.deepcopy(self._graph.graph[node])
             new_node_name = new_node.name
 
             # Remove all the parents of the node, the node is intervened on
-            if new_node_name in do_nodes_name:
+            if new_node_name in do_nodes:
                 new_node.parents = []
 
             # Remove all the node's children that are intervened on
             for child in new_node.children:
-                if child.name in do_nodes_name:
+                if child.name in do_nodes:
                     new_node.children.remove(child)
 
             # Add the new node to the list of formatted nodes
@@ -148,14 +145,14 @@ class CausalGraph:
         :return: the names of the nodes' parents
         """
 
-        # Turns single node into a list of size one
-        if not isinstance(nodes, list):
-            nodes = [nodes]
+        # Turns single node into a set of size one
+        if not isinstance(nodes, set):
+            nodes = {nodes}
 
         # Collect all the node's parents
         pa = []
         for node in nodes:
-            pa.extend(self._graph.predecessors(self._graph.graph[node]))
+            pa.extend(self._graph.predecessors(node))
         return set(pa)
 
     def children(self, nodes):
@@ -165,9 +162,9 @@ class CausalGraph:
         :return: the names of the nodes' children
         """
 
-        # Turns single node into a list of size one
-        if not isinstance(nodes, list):
-            nodes = [nodes]
+        # Turns single node into a set of size one
+        if not isinstance(nodes, set):
+            nodes = {nodes}
 
         # Collect all the node's children
         ch = []
@@ -182,9 +179,9 @@ class CausalGraph:
         :return: the names of nodes' ancestors
         """
 
-        # Turns single node into a list of size one
-        if not isinstance(nodes, list):
-            nodes = [nodes]
+        # Turns single node into a set of size one
+        if not isinstance(nodes, set):
+            nodes = {nodes}
 
         # Retrieve all the nodes ancestors
         ancestors = []
@@ -200,9 +197,9 @@ class CausalGraph:
         :return: the names of the nodes' descendants
         """
 
-        # Turns single node into a list of size one
-        if not isinstance(nodes, list):
-            nodes = [nodes]
+        # Turns single node into a set of size one
+        if not isinstance(nodes, set):
+            nodes = {nodes}
 
         # Retrieve all the nodes descendants
         descendants = []
@@ -291,12 +288,12 @@ class CausalGraph:
         :return: the nodes' c-component
         """
 
-        # Turns single node into a list of size one
-        if not isinstance(nodes, list):
-            nodes = [nodes]
+        # Turns single node into a set of size one
+        if not isinstance(nodes, set):
+            nodes = {nodes}
 
         # Create the union of the nodes' c-components
-        return set.union(*[self.c_components_cache[node.name] for node in nodes])
+        return set.union(*[self.c_components_cache[node] for node in nodes])
 
     @property
     def name(self):
@@ -336,7 +333,7 @@ class CausalGraph:
         Getter
         :return: the reward variables of the graph
         """
-        return [node for node in self._graph.nodes if self._graph.graph[node].is_reward()]
+        return {node for node in self._graph.nodes if self._graph.graph[node].is_reward()}
 
     @property
     def exploration_set(self):

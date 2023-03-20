@@ -7,6 +7,9 @@ class MIS(ExplorationSetInterface):
     """
 
     def __init__(self, **kwarg):
+        """
+        Construct an instance of the Minimal Intervention Sets algorithm.
+        """
         pass
 
     def run(self, graph, reward_variables):
@@ -18,21 +21,22 @@ class MIS(ExplorationSetInterface):
         """
 
         # Collect all the nodes that does not correspond to reward variables
-        non_reward_nodes = self.filter_set(graph.nodes, reward_variables)
+        non_reward_nodes = self.set_minus(graph.nodes, reward_variables)
 
         # Create the graph induced by the ancestors of the reward variables
-        induced_graph = graph[graph.ancestors(reward_variables)]
+        induced_graph = graph[graph.ancestors(reward_variables) | reward_variables]
 
         # Create a topological ordering of all the non-reward nodes
         topological_ordering = induced_graph.topological_sort(backward=True)
         topological_ordering = graph.only(topological_ordering, non_reward_nodes)
 
         # Compute all the minimal intervention sets recursively
-        return self.sub_miss(induced_graph, reward_variables, frozenset(), topological_ordering)
+        return self.sub_miss(graph, induced_graph, reward_variables, frozenset(), topological_ordering)
 
-    def sub_miss(self, graph, reward_variables, mis, topological_ordering):
+    def sub_miss(self, full_graph, graph, reward_variables, mis, topological_ordering):
         """
         Builds a set of minimal intervention sets by adding a variable to a previously obtained minimal intervention set
+        :param full_graph: the full graph the algorithm started from
         :param graph: the graph whose minimal intervention sets should be returned
         :param reward_variables: the reward variables
         :param mis: a previously found minimum intervention set
@@ -47,10 +51,10 @@ class MIS(ExplorationSetInterface):
             do_graph = graph.do({node})
 
             # Create the graph induced by the ancestors of the reward variables
-            do_graph = do_graph[do_graph.ancestors(reward_variables)]
+            do_graph = do_graph[do_graph.ancestors(reward_variables) | reward_variables]
 
             # Create the new topological ordering
-            new_topological_ordering = self._graph.only(topological_ordering[i + 1:], do_graph.nodes)
+            new_topological_ordering = full_graph.only(topological_ordering[i + 1:], do_graph.nodes)
 
             # Compute all the sub-minimal intervention sets by adding a variable to a previously obtained
             # minimal intervention set

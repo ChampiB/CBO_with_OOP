@@ -7,6 +7,9 @@ class POMIS(ExplorationSetInterface):
     """
 
     def __init__(self, **kwarg):
+        """
+        Construct an instance of the Possibly-Optimal Minimal Intervention Sets algorithm.
+        """
         pass
 
     def run(self, graph, reward_variables):
@@ -18,7 +21,9 @@ class POMIS(ExplorationSetInterface):
         """
 
         # Create the graph induced by the ancestors of the reward variables
-        induced_graph = graph[graph.ancestors(reward_variables)]
+        print(reward_variables)
+        print(graph.nodes)
+        induced_graph = graph[graph.ancestors(reward_variables) | reward_variables]
 
         # Compute the minimal unobserved confounder's territory and the interventional border
         territory = self.get_minimal_territories(induced_graph, reward_variables)
@@ -34,10 +39,12 @@ class POMIS(ExplorationSetInterface):
         interventions = induced_graph.topological_sort(backward=True)
 
         # Only keep the nodes which are in the territory minus the reward variables
-        interventions = self._graph.only(interventions, territory - {reward_variables})
+        interventions = graph.only(interventions, territory - {reward_variables})
 
         # Compute all the possibly optimal minimal intervention sets recursively
-        return self.sub_possibly_optimal_sets(induced_graph, reward_variables, interventions) | {interventional_border}
+        return self.sub_possibly_optimal_sets(
+            graph, induced_graph, reward_variables, interventions
+        ) | {interventional_border}
 
     @staticmethod
     def get_minimal_territories(graph, reward_variables):
@@ -49,11 +56,11 @@ class POMIS(ExplorationSetInterface):
         """
 
         # Create the graph induced by the ancestors of the reward variables
-        induced_graph = graph[graph.ancestors(reward_variables)]
+        induced_graph = graph[graph.ancestors(reward_variables) | reward_variables]
 
         # TODO
-        Qs = {reward_variables}
-        territories = {reward_variables}
+        Qs = reward_variables
+        territories = reward_variables
         while Qs:
             Ws = induced_graph.c_component(Qs.pop())
             territories |= Ws
@@ -71,9 +78,10 @@ class POMIS(ExplorationSetInterface):
         """
         return graph.parents(territory) - territory
 
-    def sub_possibly_optimal_sets(self, graph, reward_variables, interventions, obs=None):
+    def sub_possibly_optimal_sets(self, full_graph, graph, reward_variables, interventions, obs=None):
         """
         Compute all the possibly optimal minimal intervention sets for a graph with respect to reward variables
+        :param full_graph: the full graph the algorithm started from
         :param graph: the graph whose possibly optimal minimal intervention sets must be returned
         :param reward_variables: the reward variables
         :param interventions: the topological ordering of the graph's nodes
@@ -95,12 +103,12 @@ class POMIS(ExplorationSetInterface):
             new_obs = obs | set(interventions[:i])
             if not (interventional_border & new_obs):
                 possibly_optimal_sets.append(interventional_border)
-                new_interventions = self._graph.only(interventions[i + 1:], territory)
+                new_interventions = full_graph.only(interventions[i + 1:], territory)
 
                 if new_interventions:
                     new_graph = graph.do(interventional_border)[territory | interventional_border]
-                    possibly_optimal_sets.extend(
-                        self.sub_possibly_optimal_sets(new_graph, reward_variables, new_interventions, new_obs)
-                    )
+                    possibly_optimal_sets.extend(self.sub_possibly_optimal_sets(
+                        full_graph, new_graph, reward_variables, new_interventions, new_obs
+                    ))
 
-        return possibly_optimal_sets
+        return set(possibly_optimal_sets)
