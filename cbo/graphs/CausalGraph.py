@@ -342,8 +342,16 @@ class CausalGraph:
         """ Convert any bidirected edge to unidirected edge from an unobserved confounder variable.
         For example A <-> B will be transformed to A <- U1 -> B where U1 is the unobserved variable.
         """
-        # TODO[lisa]: This does not work when the unobserved variable is linked to more than
-        # TODO[lisa]: two latents.
+        # TODO[lisa]: This currently assigns one unobserved variable to every pair of variables linked by a bidirected
+        # TODO[lisa]: edge. For now, we assume that the structural equations should be fitted with the parent's values.
+        # TODO[lisa]: This is thus uncompatible with lambda functions (as they use named parameters) but should work
+        # TODO[lisa]: with regressions (the dimensionality will be unchanged).
+        # TODO[lisa]: If we need to pass the confounded variables as input instead, we need to remove the update of
+        # TODO[lisa]: the parent/children list of the nodes and only update the graph. However, we would need to ensure
+        # TODO[lisa]: that the discrepancies between graph and nodes parents/children do not lead to strange behaviours.
+        # TODO[lisa]: Morever, Fig. 2 and the corresponding(?) complete_graph config seems to indicate that unobserved
+        # TODO[lisa]: variables are only associated with one variable, not both. So it is not too clear what should be done
+        # TODO[lisa]: we will need to ask the authors once the implementation is finished.
         # Try to assign a readable name to unobserved variables, if not possible use a unique one.
         base_name = "U" if not len([x for x in self._graph.nodes if "U" in x]) else str(uuid.uuid4())
         equation = StringEquation("lambda epsilon: epsilon")
