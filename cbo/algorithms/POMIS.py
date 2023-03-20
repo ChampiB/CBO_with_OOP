@@ -12,7 +12,7 @@ class POMIS(ExplorationSetInterface):
         """
         pass
 
-    def run(self, graph, reward_variables):
+    def __call__(self, graph, reward_variables):
         """
         Find all the possibly optimal minimal intervention sets w.r.t. the reward variables
         :param graph: the graph on which the algorithm will be run

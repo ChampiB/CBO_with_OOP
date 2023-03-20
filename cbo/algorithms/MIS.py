@@ -12,7 +12,7 @@ class MIS(ExplorationSetInterface):
         """
         pass
 
-    def run(self, graph, reward_variables):
+    def __call__(self, graph, reward_variables):
         """
         Find all the minimal intervention sets w.r.t. the reward variables
         :param graph: the graph on which the algorithm must be run

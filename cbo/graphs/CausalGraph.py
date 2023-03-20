@@ -25,14 +25,13 @@ class CausalGraph:
         :param obs_path: the path to the pickle file containing the measurements
         :param true_obs_path: the path to the pickle file containing the true measurements
         :param n_initial_samples: the initial number of observations the causal graph has access to
-        :param exploration_set: the algorithm computing the exploration set
+        :param exploration_set_fn: the algorithm computing the exploration set
         """
 
         # Store the paths of the files containing the measurements and interventions
         self.interventions_path = interventions_path
         self.obs_path = obs_path
         self.true_obs_path = true_obs_path
-        self.exploration_set_fn = exploration_set_fn
 
         # Store the initial number of samples the causal graph has access to
         self.n_initial_samples = n_initial_samples
@@ -52,9 +51,7 @@ class CausalGraph:
         # TODO[lisa] the self._graph.graph properties should be kept when self.__getitem__ and self.do are called
 
         # Retrieve the reward variables and the exploration set for the graph
-        self._exploration_set = None
-        if exploration_set_fn:
-            self._exploration_set = exploration_set_fn.run(self._graph.graph["reward_variables"])
+        self._exploration_set_fn = exploration_set_fn
 
     @property
     def name(self):
@@ -102,8 +99,7 @@ class CausalGraph:
         Getter
         :return: the exploration set of the graph
         """
-        # TODO[lisa]: This should become self._graph.graph["exploration_set"]
-        return self._exploration_set
+        return self._exploration_set_fn(self, self._graph.graph["reward_variables"])
 
     def __getitem__(self, nodes):
         """
@@ -118,7 +114,7 @@ class CausalGraph:
             obs_path=self.obs_path,
             true_obs_path=self.true_obs_path,
             n_initial_samples=self.n_initial_samples,
-            exploration_set_fn=self.exploration_set_fn
+            exploration_set_fn=self._exploration_set_fn
         )
 
     def parents(self, nodes):
@@ -221,7 +217,7 @@ class CausalGraph:
             obs_path=self.obs_path,
             true_obs_path=self.true_obs_path,
             n_initial_samples=self.n_initial_samples,
-            exploration_set_fn=self.exploration_set_fn
+            exploration_set_fn=self._exploration_set_fn
         )
 
     def _format_do_nodes(self, do_nodes):
@@ -286,7 +282,7 @@ class CausalGraph:
         while nodes:
             next_node = nodes.pop()
             c_component.add(next_node)
-            nodes += set(self._graph.graph.confounded_variables[next_node.name]) - c_component
+            nodes += set(self._graph.graph["confounded_variables"][next_node]) - c_component
         return c_component
 
     def c_component(self, nodes):
@@ -312,11 +308,12 @@ class CausalGraph:
         """
 
         nodes_dict = {node.name: node for node in nodes}
-        manipulative_variables = [node.name for node in nodes_dict if node.min_intervention is not None]
-        edges = [(node.name, child_name) for node in self.nodes for child_name in node.children_name]
-        reward_variables = [node_name for node_name, node in nodes_dict.items() if node.is_reward()]
-        confounded_variables = {name: set(obj.children_name) if obj.is_unobserved else set()
-                                for name, obj in nodes_dict.items()}
+        manipulative_variables = [node.name for node in nodes if node.min_intervention is not None]
+        edges = [(node.name, child_name) for node in nodes for child_name in node.children_name]
+        reward_variables = {node_name for node_name, node in nodes_dict.items() if node.is_reward}
+        confounded_variables = {
+            name: set(obj.children_name) if obj.is_unobserved else set() for name, obj in nodes_dict.items()
+        }
 
         self._graph = nx.DiGraph(edges, **nodes_dict, manipulative_variables=manipulative_variables, name=name,
                                  confounded_variables=confounded_variables,
