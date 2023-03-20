@@ -17,18 +17,13 @@ def update_hull(observational_samples, manipulative_variables):
     return coverage_obs
 
 
-def observe(num_observation, complete_dataset=None, initial_num_obs_samples=None):
-    observational_samples = complete_dataset[initial_num_obs_samples:(initial_num_obs_samples+num_observation)]
-    return observational_samples
-    
-
 def compute_coverage(observational_samples, manipulative_variables, dict_ranges):
     list_variables = []
     list_ranges = []
 
     for i in range(len(manipulative_variables)):
-      list_variables.append(observational_samples[manipulative_variables[i]])
-      list_ranges.append(dict_ranges[manipulative_variables[i]])
+        list_variables.append(observational_samples[manipulative_variables[i]])
+        list_ranges.append(dict_ranges[manipulative_variables[i]])
 
     vertices = list(itertools.product(*[list_ranges[i] for i in range(len(manipulative_variables))]))
     coverage_total = scipy.spatial.ConvexHull(vertices).volume
@@ -43,6 +38,8 @@ def compute_coverage(observational_samples, manipulative_variables, dict_ranges)
 
 def define_initial_data_cbo(interventional_data, num_interventions, exploration_set, task):
 
+    objective = np.min if task == 'min' else np.max
+
     data_list = []
     data_x_list = []
     data_y_list = []
@@ -50,13 +47,9 @@ def define_initial_data_cbo(interventional_data, num_interventions, exploration_
 
     for j in range(len(exploration_set)):
         data = interventional_data[j].copy()
-        num_variables = data[0]
-        if num_variables == 1:
-            data_x = np.asarray(data[(num_variables+1)])
-            data_y = np.asarray(data[-1])
-        else:
-            data_x = np.asarray(data[(num_variables+1):(num_variables*2)][0])
-            data_y = np.asarray(data[-1])
+        n_vars = data[0]
+        data_x = np.asarray(data[(n_vars + 1)] if n_vars == 1 else data[(n_vars + 1):(n_vars * 2)][0])
+        data_y = np.asarray(data[-1])
 
         if len(data_y.shape) == 1:
             data_y = data_y[:, np.newaxis]
@@ -76,36 +69,13 @@ def define_initial_data_cbo(interventional_data, num_interventions, exploration_
         data_x_list.append(data_list[j][:, :-1])
         data_y_list.append(data_list[j][:, -1][:, np.newaxis])
 
-        if task == 'min':
-            opt_list.append(np.min(subset_all_data[:, -1]))
-            var_min = exploration_set[np.where(opt_list == np.min(opt_list))[0][0]]
-            opt_y = np.min(opt_list)
-            opt_intervention_array = data_list[np.where(opt_list == np.min(opt_list))[0][0]]
-        else:
-            opt_list.append(np.max(subset_all_data[:, -1]))
-            var_min = exploration_set[np.where(opt_list == np.max(opt_list))[0][0]]
-            opt_y = np.max(opt_list)
-            opt_intervention_array = data_list[np.where(opt_list == np.max(opt_list))[0][0]]
+        opt_list.append(objective(subset_all_data[:, -1]))
+        opt_y = objective(opt_list)
+        var_min = exploration_set[np.where(opt_list == opt_y)[0][0]]
+        opt_intervention = data_list[np.where(opt_list == opt_y)[0][0]]
 
-    if len(var_min) == 3:
-        best_variable1 = var_min[0]
-        best_variable2 = var_min[1]
-        best_variable3 = var_min[2]
-        best_variable = best_variable1 + best_variable2 + best_variable3
-    
-    if len(var_min) == 2:
-        best_variable1 = var_min[0]
-        best_variable2 = var_min[1]
-        best_variable = best_variable1 + best_variable2
-    
-    if len(var_min) == 1:
-        best_variable = var_min[0]
+    shape_opt = opt_intervention.shape[1] - 1
+    best = objective(opt_intervention[:, shape_opt])
+    best_intervention_value = opt_intervention[opt_intervention[:, shape_opt] == best, :shape_opt][0]
 
-    shape_opt = opt_intervention_array.shape[1] - 1
-    if task == 'min':
-        best_intervention_value = opt_intervention_array[opt_intervention_array[:, shape_opt] == np.min(opt_intervention_array[:, shape_opt]), :shape_opt][0]
-    else:
-        best_intervention_value = opt_intervention_array[opt_intervention_array[:, shape_opt] == np.max(opt_intervention_array[:, shape_opt]), :shape_opt][0]
-   
-    return data_x_list, data_y_list, best_intervention_value, opt_y, best_variable
-
+    return data_x_list, data_y_list, best_intervention_value, opt_y, sum(var_min)

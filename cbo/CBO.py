@@ -203,11 +203,7 @@ class CBO:
 		Retrieve a new observation
 		:return: the new observation
 		"""
-		return observe(
-			num_observation=self.n_new_observations,
-			complete_dataset=self.all_measurements,
-			initial_num_obs_samples=self.n_initial_samples
-		)
+		return self.all_measurements[self.n_initial_samples:self.n_initial_samples + self.n_new_observations]
 
 	def update_all_gaussian_processes(self):
 		"""
