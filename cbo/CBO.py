@@ -1,3 +1,4 @@
+from hydra.utils import instantiate
 from pathlib import Path
 from cbo.DoCalculus import DoCalculus
 from cbo.Monitor import Monitor
@@ -14,19 +15,18 @@ class CBO:
 	A class implementing the Causal Bayesian Optimisation agent.
 	"""
 
-	def __init__(self, config, graph, verbose=True):
+	def __init__(self, config, verbose=True):
 		"""
 		Create the CBO agent
 		:param config: the hydra configuration
-		:param graph: the graph on which CBO should be run
 		:param verbose: whether to display debug information
 		"""
 
 		# Store the loaded data.
-		self.graph = graph
-		self.measurements = graph.measurements
-		self.all_measurements = graph.all_measurements
-		self.interventions = graph.interventions
+		self.graph = instantiate(config.graph.graph)
+		self.measurements = self.graph.measurements
+		self.all_measurements = self.graph.all_measurements
+		self.interventions = self.graph.interventions
 
 		# Store useful arguments.
 		self.exploration_set = self.graph.exploration_set
@@ -54,7 +54,7 @@ class CBO:
 		self.costs = self.graph.get_cost_structure(type_cost=self.cost_type)
 
 		# Get the path to the saving directory, and create it if it does not exist.
-		self.saving_dir = self.get_saving_dir(graph.name, self.num_interventions)
+		self.saving_dir = self.get_saving_dir(self.graph.name, self.num_interventions)
 		Path(self.saving_dir).mkdir(parents=True, exist_ok=True)
 
 		# Get the interventions' name for each intervention in the exploration_set

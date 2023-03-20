@@ -2,9 +2,7 @@ import logging
 from omegaconf import OmegaConf
 from hydra.utils import instantiate
 import hydra
-# Do not remove this, the custom resolvers for all the graph config are registered
-# in the __init__ of cbo to avoid copy pasting
-import cbo
+from cbo.utils_functions.utils import register_resolvers
 
 
 @hydra.main(config_path="config", config_name="run_exploration_set_algo")
@@ -28,4 +26,5 @@ if __name__ == '__main__':
     """
     Script running the exploration set algorithm.
     """
+    register_resolvers()
     run_exploration_set_algorithm()

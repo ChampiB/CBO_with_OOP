@@ -1,9 +1,10 @@
+from omegaconf import OmegaConf
+from hydra.utils import instantiate
 import os.path
 import matplotlib.pyplot as plt
 from GPy.kern import RBF
 from GPy.models.gp_regression import GPRegression
 import numpy as np
-
 from cbo.utils_functions.causal_acquisition_functions import CausalExpectedImprovement
 from cbo.utils_functions.causal_optimizer import CausalGradientAcquisitionOptimizer
 from cbo.utils_functions.cost_functions import Cost
@@ -59,12 +60,11 @@ def is_valid_path(path):
 
 
 def save_figure(out_fname, dpi=300, tight=True):
-    """Save a matplotlib figure in an `out_fname` file.
-
-    :param out_fname:  Name of the file used to save the figure.
-    :param dpi: Number of dpi, Default 300.
-    :param tight: If True, use plt.tight_layout() before saving. Default True.
-    :return: None
+    """
+    Save a matplotlib figure in an `out_fname` file
+    :param out_fname:  Name of the file used to save the figure
+    :param dpi: Number of dpi, Default 300
+    :param tight: If True, use plt.tight_layout() before saving. Default True
     """
     if tight is True:
         plt.tight_layout()
@@ -75,13 +75,12 @@ def save_figure(out_fname, dpi=300, tight=True):
 
 
 def remove_node_from_family(node, node_to_remove, unobserved_node=None):
-    """ Remove the node_to_remove from parents and children names of a given node and add an unobserved variable as
+    """
+    Remove the node_to_remove from parents and children names of a given node and add an unobserved variable as
     parent is specified
-
     :param node: the name of the node whose family will be updated
     :param node_to_remove: the name of the node to remove from the family
     :param unobserved_node: the name of the node to set as new parent if specified
-    :return: None
     """
     node.children_name.remove(node_to_remove) if node_to_remove in node.children_name else None
     node.parents_name.remove(node_to_remove) if node_to_remove in node.parents_name else None
@@ -99,3 +98,9 @@ def safe_add(dictionary, key, new_node):
         dictionary[key] = [new_node]
     elif new_node not in dictionary[key]:
         dictionary[key].append(new_node)
+
+
+def register_resolvers():
+    OmegaConf.register_new_resolver("set_cost_value", lambda cost, c1: c1 if (1 < cost < 4) else 1)
+    OmegaConf.register_new_resolver("set_variable_cost", lambda cost: cost >= 3)
+    OmegaConf.register_new_resolver("get_values", lambda xs: [instantiate(xs[k]) for k in xs.keys()])

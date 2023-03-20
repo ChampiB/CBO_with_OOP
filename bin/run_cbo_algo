@@ -2,10 +2,7 @@ from cbo.CBO import *
 import hydra
 import logging
 from omegaconf import OmegaConf
-from hydra.utils import instantiate
-# Do not remove this, the custom resolvers for all the graph config are registered
-# in the __init__ of cbo to avoid copy pasting
-import cbo
+from cbo.utils_functions.utils import register_resolvers
 
 
 @hydra.main(config_path="config", config_name="run_cbo")
@@ -18,16 +15,13 @@ def run_cbo(config):
     # Log the hydra configuration
     logging.info("Graph config:\n{}".format(OmegaConf.to_yaml(config)))
 
-    # Instantiate the graph described in the configuration
-    graph = instantiate(config.graph.graph)
-
-    # Run the causal Bayesian optimisation.
-    cbo_agent = CBO(config, graph, verbose=True)
-    cbo_agent.run()
+    # Run the causal Bayesian optimisation algorithm.
+    CBO(config, verbose=True).run()
 
 
 if __name__ == '__main__':
     """
     Script running the causal Bayesian optimisation algorithm.
     """
+    register_resolvers()
     run_cbo()

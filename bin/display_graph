@@ -1,8 +1,6 @@
 import logging
 import hydra
-# Do not remove this, the custom resolvers for all the graph config are registered
-# in the __init__ of cbo to avoid copy pasting
-import cbo
+from cbo.utils_functions.utils import register_resolvers
 from omegaconf import OmegaConf
 from hydra.utils import instantiate
 
@@ -28,4 +26,5 @@ if __name__ == "__main__":
     """
     Loading and displaying the graph described in the configuration.
     """
+    register_resolvers()
     display_graph()
