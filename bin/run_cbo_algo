@@ -1,5 +1,4 @@
 from cbo.CBO import *
-from cbo.ArgumentParser import ArgumentParser as ArgumentParser
 import hydra
 import logging
 from omegaconf import OmegaConf
@@ -21,9 +20,6 @@ def run_cbo(config):
 
     # Instantiate the graph described in the configuration
     graph = instantiate(config.graph.graph)
-
-    # Parse and display the argument of the script.
-    args = ArgumentParser().parse(verbose=True)
 
     # Run the causal Bayesian optimisation.
     cbo_agent = CBO(config, graph, verbose=True)
