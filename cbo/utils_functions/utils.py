@@ -83,8 +83,8 @@ def remove_node_from_family(node, node_to_remove, unobserved_node=None):
     :param unobserved_node: the name of the node to set as new parent if specified
     :return: None
     """
-    node.children_name.remove(node_to_remove.name) if node_to_remove.name in node.children_name else None
-    node.parents_name.remove(node_to_remove.name) if node_to_remove.name in node.parents_name else None
+    node.children_name.remove(node_to_remove) if node_to_remove in node.children_name else None
+    node.parents_name.remove(node_to_remove) if node_to_remove in node.parents_name else None
     node.parents_name.append(unobserved_node) if unobserved_node is not None else None
 
 

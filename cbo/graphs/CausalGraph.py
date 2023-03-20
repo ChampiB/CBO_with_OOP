@@ -359,15 +359,15 @@ class CausalGraph:
             \nPlease check your configuration if this was not intended.".format(cycle[0][0], cycle[0][1],
                                                                               unobserved_node_name))
             n1, n2 = self._graph.graph[cycle[0][0]], self._graph.graph[cycle[0][1]]
-            self._graph.graph["confounded_variables"][n1.name].add(n2)
-            self._graph.graph["confounded_variables"][n2.name].add(n1)
+            self._graph.graph["confounded_variables"][n1.name].add(n2.name)
+            self._graph.graph["confounded_variables"][n2.name].add(n1.name)
             self._graph.graph["confounded_variables"][unobserved_node_name] = set()
             unobserved_node = Node(name=unobserved_node_name, is_unobserved=True, equation=equation,
                                    children_name=[n1.name, n2.name])
 
             # Remove parentage between the nodes with bi-directed edge and replace by an unobserved node
-            remove_node_from_family(n1, n2, unobserved_node)
-            remove_node_from_family(n2, n1, unobserved_node)
+            remove_node_from_family(n1, n2.name, unobserved_node_name)
+            remove_node_from_family(n2, n1.name, unobserved_node_name)
 
             # Do the same in the networkx graph
             self._graph.remove_edges_from(cycle)
