@@ -3,7 +3,7 @@
 # https://omegaconf.readthedocs.io/en/2.2_branch/custom_resolvers.html
 # I will work on this next week
 
-variable_cost: False
+cost_type: 1
 
 defaults:
   - _self_
@@ -11,7 +11,7 @@ defaults:
   - graph: complete
 
 
-save_file: ${graph.name}_graph_variable_cost_${variable_cost}.pdf
+save_file: ${graph.name}_graph_cost_type_${cost_type}.pdf
 
 
 hydra:
