@@ -282,7 +282,7 @@ class CausalGraph:
         while nodes:
             next_node = nodes.pop()
             c_component.add(next_node)
-            nodes += set(self._graph.graph["confounded_variables"][next_node]) - c_component
+            nodes += set(self._graph.graph["confounded_variables"].get(next_node, [])) - c_component
         return c_component
 
     def c_component(self, nodes):
@@ -356,12 +356,12 @@ class CausalGraph:
 
             unobserved_node_name = "{}{}".format(base_name, i)
             logger.warning("Removing bidirected edge between {} and {} and replacing it by unseen variable {} ~ N(0,1).\
-            Please check your configuration if this was not intended.".format(cycle[0][0], cycle[0][1],
+            \nPlease check your configuration if this was not intended.".format(cycle[0][0], cycle[0][1],
                                                                               unobserved_node_name))
             n1, n2 = self._graph.graph[cycle[0][0]], self._graph.graph[cycle[0][1]]
-            self._graph.graph.confounded_variables[n1.name].add(n2)
-            self._graph.graph.confounded_variables[n2.name].add(n1)
-            self._graph.graph.confounded_variables[unobserved_node_name] = set()
+            self._graph.graph["confounded_variables"][n1.name].add(n2)
+            self._graph.graph["confounded_variables"][n2.name].add(n1)
+            self._graph.graph["confounded_variables"][unobserved_node_name] = set()
             unobserved_node = Node(name=unobserved_node_name, is_unobserved=True, equation=equation,
                                    children_name=[n1.name, n2.name])
 
