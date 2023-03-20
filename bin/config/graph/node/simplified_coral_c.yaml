@@ -8,7 +8,8 @@ C:
   children_name:
     - Y
   equation:
-    _target_: sklearn.linear_model.LinearRegression
+    _target_: SklearnEquation
+    sklearn_model: sklearn.linear_model.LinearRegression
   fixed_cost: "${set_cost_value: ${cost_type}, 2}"
   variable_cost: "${set_variable_cost: ${cost_type}}"
   min_intervention: 0.3
