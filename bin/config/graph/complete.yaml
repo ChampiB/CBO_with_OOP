@@ -1,13 +1,14 @@
 graph:
-     _target_: cbo.graphs.CausalGraph.CausalGraph
-     obs_path: ${oc.env:DATA_PATH}/complete_graph/observations.pkl
-     interventions_path: ${oc.env:DATA_PATH}/complete_graph/interventional_data.npy
-     n_initial_samples: ${n_initial_samples}
-     name: "Complete"
-     nodes: "${get_values: ${graph.nodes_dict}}"
+    _target_: cbo.graphs.CausalGraph.CausalGraph
+    obs_path: ${oc.env:DATA_PATH}/complete_graph/observations.pkl
+    interventions_path: ${oc.env:DATA_PATH}/complete_graph/interventional_data.npy
+    n_initial_samples: ${n_initial_samples}
+    name: "Complete"
+    nodes: "${get_values: ${graph.nodes_dict}}"
+    exploration_set: ${algorithm}
 
 defaults:
-   - node@nodes_dict:
+    - node@nodes_dict:
         - complete_u1
         - complete_u2
         - complete_f
@@ -17,4 +18,4 @@ defaults:
         - complete_d
         - complete_e
         - complete_y
-   - _self_
+    - _self_

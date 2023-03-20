@@ -5,7 +5,6 @@ from cbo.utils_functions.utils import is_valid_path, save_figure
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-from cbo.algorithms.MIS import MIS
 
 
 class CausalGraph:
@@ -13,7 +12,10 @@ class CausalGraph:
     A class implementing a generic causal graph.
     """
 
-    def __init__(self, name, nodes, interventions_path, obs_path, true_obs_path=None, n_initial_samples=100):
+    def __init__(
+        self, name, nodes, interventions_path, obs_path,
+        true_obs_path=None, n_initial_samples=100, exploration_set=None
+    ):
         """
         Construct the graph requested in the hydra configuration
         :param name: the graph's name
@@ -22,6 +24,7 @@ class CausalGraph:
         :param obs_path: the path to the pickle file containing the measurements
         :param true_obs_path: the path to the pickle file containing the true measurements
         :param n_initial_samples: the initial number of observations the causal graph has access to
+        :param exploration_set: the algorithm computing the exploration set
         """
 
         # Store the paths of the files containing the measurements and interventions
@@ -55,8 +58,7 @@ class CausalGraph:
         # TODO[lisa] all 4 caches should also be transferred when self.__getitem__ and self.do are called
 
         # Retrieve the reward variables and the exploration set for the graph
-        self.exploration_set = MIS(self).run(self.reward_variables)
-        # TODO[lisa] add exploration set algorithm to hydra configuration, i.e., POMIS vs MIS
+        self._exploration_set = None if exploration_set is None else exploration_set.run(self, self.reward_variables)
 
     def __getitem__(self, nodes):
         """
@@ -70,26 +72,23 @@ class CausalGraph:
             interventions_path=self.interventions_path,
             obs_path=self.obs_path,
             true_obs_path=self.true_obs_path,
-            n_initial_samples=self.n_initial_samples
+            n_initial_samples=self.n_initial_samples,
+            exploration_set=self.exploration_set
         )
 
-    @staticmethod
-    def _format_induced_nodes(nodes):
+    def _format_induced_nodes(self, nodes_name):
         """
         Format the nodes passed as parameters to fit the format expected by the causal graph constructor
         :params nodes: the nodes to format
         :return: the formatted nodes
         """
 
-        # Get the name of all nodes passed as parameters
-        nodes_name = [node.name for node in nodes]
-
         # Format all nodes passed as parameters
         formatted_nodes = []
-        for node in nodes:
-            new_node = copy.deepcopy(node)
-            new_node.parents_name = [parent_name for parent_name in node.parents_name if parent_name in nodes_name]
-            new_node.children_name = [child_name for child_name in node.children_name if child_name in nodes_name]
+        for node_name in nodes_name:
+            new_node = copy.deepcopy(self._graph.graph[node_name])
+            new_node.parents_name = [parent_name for parent_name in new_node.parents_name if parent_name in nodes_name]
+            new_node.children_name = [child_name for child_name in new_node.children_name if child_name in nodes_name]
             formatted_nodes.append(new_node)
 
         return formatted_nodes
@@ -106,7 +105,8 @@ class CausalGraph:
             interventions_path=self.interventions_path,
             obs_path=self.obs_path,
             true_obs_path=self.true_obs_path,
-            n_initial_samples=self.n_initial_samples
+            n_initial_samples=self.n_initial_samples,
+            exploration_set=self.exploration_set
         )
 
     def _format_do_nodes(self, do_nodes):
@@ -232,7 +232,7 @@ class CausalGraph:
             remaining_nodes -= found_nodes
 
         # Collect the c-component of each node
-        return {node.name: c_component for c_component in c_components for node in c_component}
+        return {node: c_component for c_component in c_components for node in c_component}
 
     def _get_c_component(self, node):
         """
@@ -245,7 +245,7 @@ class CausalGraph:
         while nodes:
             next_node = nodes.pop()
             c_component.add(next_node)
-            nodes += set(self.confounded_vars_cache[next_node.name]) - c_component
+            nodes += set(self.confounded_vars_cache[next_node]) - c_component
         return c_component
 
     def _get_confounded_variables(self):
@@ -266,8 +266,8 @@ class CausalGraph:
 
         # Create an empty list for each variable that is not confounded with any other variables
         for node in self.nodes:
-            if node.name not in confounded_vars.keys():
-                confounded_vars[node.name] = []
+            if node not in confounded_vars.keys():
+                confounded_vars[node] = []
 
         return confounded_vars
 
@@ -336,7 +336,15 @@ class CausalGraph:
         Getter
         :return: the reward variables of the graph
         """
-        return [node for node in self._graph.nodes if node.is_reward()]
+        return [node for node in self._graph.nodes if self._graph.graph[node].is_reward()]
+
+    @property
+    def exploration_set(self):
+        """
+        Getter
+        :return: the exploration set of the graph
+        """
+        return self._exploration_set if hasattr(self, "_exploration_set") else None
 
     def _preprocess_nodes(self, nodes, name):
         """
@@ -347,8 +355,8 @@ class CausalGraph:
         """
 
         nodes_dict = {node.name: node for node in nodes}
-        manipulative_variables = [node.name for node in nodes_dict if node.min_intervention is not None]
-        edges = [(node.name, child_name) for node in self.nodes for child_name in node.children_name]
+        manipulative_variables = [node.name for node in nodes_dict.values() if node.min_intervention is not None]
+        edges = [(node.name, child_name) for node in nodes_dict.values() for child_name in node.children_name]
 
         self._graph = nx.DiGraph(edges, **nodes_dict, manipulative_variables=manipulative_variables, name=name)
         self._graph.add_nodes_from(nodes_dict.keys())
@@ -391,7 +399,7 @@ class CausalGraph:
 
         # Reverse it if requested
         if backward:
-            topological_ordering = reversed(topological_ordering)
+            topological_ordering = reversed(list(topological_ordering))
 
         return topological_ordering
 
@@ -431,10 +439,6 @@ class CausalGraph:
 
     def get_cost_structure(self, type_cost):
         # TODO: implement this if still needed
-        pass
-
-    def get_exploration_set(self):
-        # TODO: implement this
         pass
 
     def sample(self):

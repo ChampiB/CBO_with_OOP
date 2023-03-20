@@ -5,6 +5,7 @@ show: true
 
 defaults:
   - _self_
+  - algorithm: mis
   - graph: complete
 
 

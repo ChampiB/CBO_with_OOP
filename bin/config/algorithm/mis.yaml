@@ -1,6 +1,5 @@
 _target_: cbo.algorithms.MIS.MIS
 name: "MIS"
-graph: ${graph}
 
 defaults:
     - _self_
