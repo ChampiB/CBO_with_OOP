@@ -14,32 +14,34 @@ class CBO:
 	A class implementing the Causal Bayesian Optimisation agent.
 	"""
 
-	def __init__(self, args, data, verbose=True):
+	def __init__(self, config, graph, verbose=True):
 		"""
 		Create the CBO agent
-		:param args: the scripts arguments
-		:param data: the data loader
+		:param config: the hydra configuration
+		:param graph: the graph on which CBO should be run
 		:param verbose: whether to display debug information
 		"""
 
 		# Store the loaded data.
-		self.graph = data.graph
-		self.measurements = data.measurements
-		self.all_measurements = data.all_measurements
-		self.interventions = data.interventions
+		self.graph = graph
+		self.measurements = graph.measurements
+		self.all_measurements = graph.all_measurements
+		self.interventions = graph.interventions
 
 		# Store useful arguments.
-		self.exploration_set = self.graph.get_exploration_set(args.exploration_set)
+		self.exploration_set = self.graph.exploration_set
 		self.es_size = len(self.exploration_set)
-		self.num_interventions = args.num_interventions
-		self.max_n = args.initial_num_obs_samples + 50
-		self.initial_num_obs_samples = args.initial_num_obs_samples
-		self.gp_type = GPType.CAUSAL_GP if args.causal_prior else GPType.NON_CAUSAL_GP
-		self.num_trials = args.num_trials
-		self.task = args.task
-		self.num_additional_observations = args.num_additional_observations
-		self.type_cost = args.type_cost
-		self.name_index = args.name_index
+		self.num_interventions = config.n_interventions
+		self.max_n = config.n_initial_samples + 50
+		self.n_initial_samples = config.n_initial_samples
+		self.gp_type = GPType.CAUSAL_GP if config.causal_prior else GPType.NON_CAUSAL_GP
+		self.num_trials = config.n_trials
+		self.task = config.task
+		self.n_new_observations = config.n_new_observations
+		self.cost_type = config.cost_type
+
+		# Set the seed for reproducibility
+		np.random.seed(config.seed)
 
 		# List that will contain the mean and variance functions of the Gaussian processes.
 		self.mean_functions = []
@@ -49,10 +51,10 @@ class CBO:
 		self.models = []
 
 		# Get the cost corresponding to the `type_cost` passed as arguments.
-		self.costs = self.graph.get_cost_structure(type_cost=self.type_cost)
+		self.costs = self.graph.get_cost_structure(type_cost=self.cost_type)
 
 		# Get the path to the saving directory, and create it if it does not exist.
-		self.saving_dir = self.get_saving_dir(args.experiment, args.num_interventions)
+		self.saving_dir = self.get_saving_dir(graph.name, self.num_interventions)
 		Path(self.saving_dir).mkdir(parents=True, exist_ok=True)
 
 		# Get the interventions' name for each intervention in the exploration_set
@@ -79,7 +81,7 @@ class CBO:
 		:return: the path to the saving directory
 		"""
 		cost_types = ["fix_equal", "fix_different", "fix_different_variable", "fix_equal_variable"]
-		return f"./data/{experiment}/{cost_types[self.type_cost]}/{self.initial_num_obs_samples}/{num_interventions}/"
+		return f"./data/{experiment}/{cost_types[self.cost_type]}/{self.n_initial_samples}/{num_interventions}/"
 
 	def run(self):
 		"""
@@ -115,7 +117,7 @@ class CBO:
 			print('=================================== Saved results ===================================')
 			print('exploration_set: ', self.exploration_set)
 			print('causal_prior: ', self.gp_type)
-			print('type_cost: ', self.type_cost)
+			print('type_cost: ', self.cost_type)
 			print('total_time: ', self.monitor.total_time)
 			print('folder: ', self.saving_dir)
 			print('=====================================================================================')
@@ -202,9 +204,9 @@ class CBO:
 		:return: the new observation
 		"""
 		return observe(
-			num_observation=self.num_additional_observations,
+			num_observation=self.n_new_observations,
 			complete_dataset=self.all_measurements,
-			initial_num_obs_samples=self.initial_num_obs_samples
+			initial_num_obs_samples=self.n_initial_samples
 		)
 
 	def update_all_gaussian_processes(self):

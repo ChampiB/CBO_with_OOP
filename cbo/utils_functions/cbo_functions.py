@@ -41,7 +41,7 @@ def compute_coverage(observational_samples, manipulative_variables, dict_ranges)
     return alpha_coverage, hull_obs, coverage_total
 
 
-def define_initial_data_cbo(interventional_data, num_interventions, exploration_set, name_index, task):
+def define_initial_data_cbo(interventional_data, num_interventions, exploration_set, task):
 
     data_list = []
     data_x_list = []
@@ -66,12 +66,8 @@ def define_initial_data_cbo(interventional_data, num_interventions, exploration_
       
         all_data = np.concatenate((data_x, data_y), axis=1)
 
-        # Need to reset the global seed
         state = np.random.get_state()
-
-        np.random.seed(name_index)
         np.random.shuffle(all_data)
-
         np.random.set_state(state)
 
         subset_all_data = all_data[:num_interventions]

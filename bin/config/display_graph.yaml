@@ -8,7 +8,6 @@ defaults:
   - algorithm: pomis
   - graph: complete
 
-
 hydra:
   run:
     dir: ${oc.env:XP_PATH}/${hydra.job.name}/${graph.graph.name}

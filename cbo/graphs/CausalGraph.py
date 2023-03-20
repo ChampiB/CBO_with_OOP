@@ -38,7 +38,8 @@ class CausalGraph:
 
         # Load the measurements and interventions
         self._interventions = np.load(interventions_path, allow_pickle=True)
-        self._observations = pd.read_pickle(obs_path)[:n_initial_samples]
+        self._all_observations = pd.read_pickle(obs_path)
+        self._observations = self._all_observations[:n_initial_samples]
         self._true_observations = pd.read_pickle(true_obs_path) if is_valid_path(true_obs_path) else None
 
         # Create the networkx graph corresponding to the causal graph
@@ -52,6 +53,30 @@ class CausalGraph:
 
         # Retrieve the reward variables and the exploration set for the graph
         self._exploration_set_fn = exploration_set_fn
+
+    @property
+    def measurements(self):
+        """
+        Getter
+        :return: the graph's measurements
+        """
+        return self._observations
+
+    @property
+    def all_measurements(self):
+        """
+        Getter
+        :return: the graph's measurements
+        """
+        return self._all_observations
+
+    @property
+    def interventions(self):
+        """
+        Getter
+        :return: the graph's interventions
+        """
+        return self._interventions
 
     @property
     def name(self):
@@ -239,9 +264,9 @@ class CausalGraph:
                 new_node.parents_name = []
 
             # Remove all the node's children that are intervened on
-            for child in new_node.children_name:
-                if child.name in do_nodes:
-                    new_node.children_name.remove(child)
+            for child_name in new_node.children_name:
+                if child_name in do_nodes:
+                    new_node.children_name.remove(child_name)
 
             # Add the new node to the list of formatted nodes
             formatted_nodes.append(new_node)

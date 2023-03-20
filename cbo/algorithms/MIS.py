@@ -58,6 +58,6 @@ class MIS(ExplorationSetInterface):
 
             # Compute all the sub-minimal intervention sets by adding a variable to a previously obtained
             # minimal intervention set
-            new_miss |= self.sub_miss(do_graph, reward_variables, mis | {node}, new_topological_ordering)
+            new_miss |= self.sub_miss(full_graph, do_graph, reward_variables, mis | {node}, new_topological_ordering)
 
         return new_miss

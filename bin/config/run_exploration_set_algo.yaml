@@ -4,15 +4,13 @@
 # I will work on this next week
 
 cost_type: 1
+save_file: ${graph.graph.name}_graph_variable_cost_${cost_type}.pdf
+n_initial_samples: 100
 
 defaults:
   - _self_
-  - algorithm: mis
+  - algorithm: pomis
   - graph: complete
-
-
-save_file: ${graph.graph.name}_graph_cost_type_${cost_type}.pdf
-
 
 hydra:
   run:

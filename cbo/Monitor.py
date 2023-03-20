@@ -25,9 +25,7 @@ class Monitor:
         # Get the initial optimal solution and the interventional data corresponding to a random permutation of the
         # interventional data with seed given by name_index
         self.data_x, self.data_y, best_intervention_value, opt_y, best_variable = \
-            define_initial_data_cbo(
-                cbo.interventions, cbo.num_interventions, cbo.exploration_set, cbo.name_index, cbo.task
-            )
+            define_initial_data_cbo(cbo.interventions, cbo.num_interventions, cbo.exploration_set, cbo.task)
         self.current_cost = [0.]
         self.global_opt = [opt_y]
 
@@ -184,7 +182,7 @@ class Monitor:
         """
         Save the results of the monitored CBO agent
         """
-        index = f"{self.cbo.exploration_set}_{self.cbo.gp_type}_{self.cbo.name_index}"
+        index = f"{self.cbo.exploration_set}_{self.cbo.gp_type}_{self.cbo.seed}"
         np.save(self.cbo.saving_dir + f"cost_{index}.npy", self.current_cost)
         np.save(self.cbo.saving_dir + f"best_x_{index}.npy", self.current_best_x)
         np.save(self.cbo.saving_dir + f"best_y_{index}.npy", self.current_best_y)
